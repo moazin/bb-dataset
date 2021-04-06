@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink= "http://www.w3.org/1999/xlink" xmlns:svg="http://www.w3.org/2000/svg" viewBox=" 0 0 1000 1000">
+  <!-- this document contains various shapes such that some aspect of strokes that affect the bounding box -->
+  <defs>
+    <!-- The clip path is a simple rectangle that clips the line such as to prevent it from being the right edge of bbox -->
+    <clipPath id="clipRect">
+      <rect x="700" y="300" width="200" height="100" />
+    </clipPath>
+  </defs>
+  <!-- The stroke making up the left edge of the bbox -->
+  <rect x="50" y="400" width="200" height="200" fill="blue" rx="50" ry="50" transform="rotate(-45 225 500)" stroke="green" stroke-width="50" />
+  <!-- A miter join making up the top edge of bbox -->
+  <path d="M 100,200 L 130,50 L 160,200 Z" stroke-width="20" stroke="magenta" stroke-linejoin="miter" stroke-miterlimit="50" transform="translate(0,100)"/>
+  <!-- line segment making up the bottom edge of bbox -->
+  <path d="M 200, 800 L 200,900" stroke-width="50" stroke="red" stroke-linecap="round"/>
+  <!-- line segment making up the right edge of bbox -->
+  <path d="M 800, 800 L 900,800" stroke-width="50" stroke="red" stroke-linecap="square"/>
+  <!-- line segment that is supposed to change bbox at all because of clipping -->
+  <path d="M 800,350 L 950,350" stroke-width="50" stroke="purple" stroke-linecap="round" clip-path="url(#clipRect)"/>
+</svg>

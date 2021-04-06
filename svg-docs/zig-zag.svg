@@ -1,0 +1,3 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink= "http://www.w3.org/1999/xlink" xmlns:svg="http://www.w3.org/2000/svg" viewBox=" 0 0 1000 1000">
+  <polyline stroke="red" stroke-width="60" points="100,100 300,300 500,100 600,300 800,250 700,800 800,850 300,900 100,500 100,100" />
+</svg>
