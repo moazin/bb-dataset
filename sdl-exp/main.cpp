@@ -119,11 +119,6 @@ void drawRectangle(State *state, double x0, double y0, double x1, double y1, Col
   SDL_UpdateWindowSurface(state->window);
 }
 
-void drawing(State *state, std::string filename){
-  drawSVGDocument(state, filename);
-  drawRectangle(state, 100, 100, 900, 900, Color{1.0, 0.0, 0.0});
-}
-
 void zoomInTransform(State *state)
 {
   double width_box = state->x1 - state->x0 + 1;
@@ -197,6 +192,41 @@ void drawRecording(State *state)
   cairo_surface_flush(state->cairo_surface);
   SDL_UpdateWindowSurface(state->window);
 }
+
+void calculateBoundingBox(std::string filename, double *x0, double *y0, double *width, double *height)
+{
+  cairo_surface_t *recording_surface = cairo_recording_surface_create(CAIRO_CONTENT_COLOR, NULL);
+  cairo_t* ct = cairo_create(recording_surface);
+
+  auto renderer = std::make_shared<SVGNative::CairoSVGRenderer>();
+
+  std::ifstream svg_file(filename);
+
+  std::string svg_doc = "";
+  std::string line;
+  while (std::getline(svg_file, line)) {
+    svg_doc += line;
+  }
+
+  auto doc = std::unique_ptr<SVGNative::SVGDocument>(SVGNative::SVGDocument::CreateSVGDocument(svg_doc.c_str(), renderer));
+  renderer->SetCairo(ct);
+  doc->Render();
+
+  cairo_recording_surface_ink_extents(recording_surface, x0, y0, width, height);
+  cairo_destroy(ct);
+  cairo_surface_flush(recording_surface);
+  cairo_surface_destroy(recording_surface);
+}
+
+void drawing(State *state, std::string filename){
+  double x0, y0, width, height, x1, y1;
+  calculateBoundingBox(filename, &x0, &y0, &width, &height);
+  x1 = x0 + width - 1;
+  y1 = y0 + height - 1;
+  drawSVGDocument(state, filename);
+  drawRectangle(state, x0, y0, x1, y1, Color{1.0, 0.0, 0.0});
+}
+
 
 int main(int argc, char** argv)
 {
