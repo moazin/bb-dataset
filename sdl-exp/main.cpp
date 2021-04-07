@@ -225,7 +225,9 @@ void drawInfoBox(State *state)
   cairo_set_source_rgb(state->cr, 0, 0, 0);
   cairo_set_font_size(state->cr, 13);
   cairo_move_to(state->cr, 10, 20);
-  cairo_show_text(state->cr, "Hello Bro");
+  char characters[100];
+  sprintf(characters, "Viewbox: %f %f %f %f", state->x0, state->y0, state->x1, state->y1);
+  cairo_show_text(state->cr, characters);
   cairo_surface_flush(state->cairo_surface);
   SDL_UpdateWindowSurface(state->window);
   cairo_restore(state->cr);
