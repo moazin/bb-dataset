@@ -22,6 +22,8 @@ typedef struct _State {
   double y1;
   double scale_x;
   double scale_y;
+  bool render_recording;
+  cairo_surface_t *recording_surface;
 } State;
 
 typedef struct _Color {
@@ -38,8 +40,8 @@ int initialize(State *state, int width, int height) {
   }
 
   state->window = SDL_CreateWindow("SDL Example",
-                            SDL_WINDOWPOS_UNDEFINED,
-                            SDL_WINDOWPOS_UNDEFINED,
+                            0,
+                            0,
                             width,
                             height,
                             0);
@@ -55,6 +57,7 @@ int initialize(State *state, int width, int height) {
                                                              state->sdl_surface->w,
                                                              state->sdl_surface->h,
                                                              state->sdl_surface->pitch);
+  state->recording_surface = cairo_recording_surface_create(CAIRO_CONTENT_COLOR, NULL);
   state->cr = cairo_create(state->cairo_surface);
   cairo_set_source_rgb(state->cr, 1.0, 1.0, 1.0);
   cairo_move_to(state->cr, 0, 0);
@@ -187,13 +190,21 @@ void setTransform(State *state)
   cairo_translate(state->cr, -1 * state->x0, -1 * state->y0);
 }
 
+void drawRecording(State *state)
+{
+  cairo_set_source_surface(state->cr, state->recording_surface, 0.0, 0.0);
+  cairo_paint(state->cr);
+  cairo_surface_flush(state->cairo_surface);
+  SDL_UpdateWindowSurface(state->window);
+}
+
 int main(int argc, char** argv)
 {
   if (argc != 2)
     return 1;
 
-  int width = 1000;
-  int height = 1000;
+  int width = 500;
+  int height = 500;
 
   State state;
   state.x0 = 0;
@@ -204,6 +215,7 @@ int main(int argc, char** argv)
   state.height = height;
   state.scale_x = 1;
   state.scale_y = 1;
+  state.render_recording = false;
 
   if (initialize(&state, width, height))
     return 1;
@@ -225,14 +237,20 @@ int main(int argc, char** argv)
           clearCanvas(&state);
           zoomInTransform(&state);
           setTransform(&state);
-          drawing(&state, std::string(argv[1]));
+          if (state.render_recording)
+            drawRecording(&state);
+          else
+            drawing(&state, std::string(argv[1]));
         }
         else if(ke.keysym.scancode == 86)
         {
           clearCanvas(&state);
           zoomOutTransform(&state);
           setTransform(&state);
-          drawing(&state, std::string(argv[1]));
+          if (state.render_recording)
+            drawRecording(&state);
+          else
+            drawing(&state, std::string(argv[1]));
         }
         else if(ke.keysym.scancode == 82)
         {
@@ -240,7 +258,10 @@ int main(int argc, char** argv)
           clearCanvas(&state);
           moveTransform(&state, 0, -1);
           setTransform(&state);
-          drawing(&state, std::string(argv[1]));
+          if (state.render_recording)
+            drawRecording(&state);
+          else
+            drawing(&state, std::string(argv[1]));
         }
         else if(ke.keysym.scancode == 80)
         {
@@ -248,7 +269,10 @@ int main(int argc, char** argv)
           clearCanvas(&state);
           moveTransform(&state, -1, 0);
           setTransform(&state);
-          drawing(&state, std::string(argv[1]));
+          if (state.render_recording)
+            drawRecording(&state);
+          else
+            drawing(&state, std::string(argv[1]));
         }
         else if(ke.keysym.scancode == 81)
         {
@@ -256,7 +280,10 @@ int main(int argc, char** argv)
           clearCanvas(&state);
           moveTransform(&state, 0, 1);
           setTransform(&state);
-          drawing(&state, std::string(argv[1]));
+          if (state.render_recording)
+            drawRecording(&state);
+          else
+            drawing(&state, std::string(argv[1]));
         }
         else if(ke.keysym.scancode == 79)
         {
@@ -264,8 +291,57 @@ int main(int argc, char** argv)
           clearCanvas(&state);
           moveTransform(&state, 1, 0);
           setTransform(&state);
+          if (state.render_recording)
+            drawRecording(&state);
+          else
+            drawing(&state, std::string(argv[1]));
+        }
+        else if(ke.keysym.scancode == 15)
+        {
+          unsigned char* data = cairo_image_surface_get_data(state.cairo_surface);
+          int width = cairo_image_surface_get_width(state.cairo_surface);
+          int height = cairo_image_surface_get_height(state.cairo_surface);
+          int pitch = cairo_image_surface_get_stride(state.cairo_surface);
+          cairo_t *ct = cairo_create(state.recording_surface);
+          printf("%d %d %d\n", width, height, pitch);
+          cairo_set_antialias(ct, CAIRO_ANTIALIAS_NONE);
+          for(int i = 0; i < height; i++) {
+            for(int j = 0; j < width; j++){
+              Color color;
+              color.r = float(*(data + (i * pitch) + j*4))/255.0;
+              color.g = float(*(data + (i * pitch) + j*4 + 1))/255.0;
+              color.b = float(*(data + (i * pitch) + j*4 + 2))/255.0;
+              cairo_set_source_rgb(ct, color.r, color.g, color.b);
+              cairo_set_line_width(ct, 0);
+              cairo_rectangle(ct, j, i, 1, 1);
+              cairo_fill(ct);
+            }
+          }
+          state.render_recording = true;
+          state.x0 = 0;
+          state.y0 = 0;
+          state.x1 = state.width - 1;
+          state.y1 = state.height - 1;
+          cairo_destroy(ct);
+          clearCanvas(&state);
+          setTransform(&state);
+          drawRecording(&state);
+        }
+        else if(ke.keysym.scancode == 24)
+        {
+          state.render_recording = false;
+          state.x0 = 0;
+          state.y0 = 0;
+          state.x1 = state.width - 1;
+          state.y1 = state.height - 1;
+          clearCanvas(&state);
+          setTransform(&state);
           drawing(&state, std::string(argv[1]));
-
+        }
+        else if(ke.keysym.scancode == 22)
+        {
+          cairo_surface_write_to_png(state.cairo_surface, "output.png");
+          printf("done\n");
         }
         else
           printf("%d\n", ke.keysym.scancode);
@@ -275,6 +351,7 @@ int main(int argc, char** argv)
 
   cairo_destroy(state.cr);
   cairo_surface_destroy(state.cairo_surface);
+  cairo_surface_destroy(state.recording_surface);
   SDL_DestroyWindow(state.window);
   SDL_Quit();
 
