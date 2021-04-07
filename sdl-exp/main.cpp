@@ -218,6 +218,19 @@ void calculateBoundingBox(std::string filename, double *x0, double *y0, double *
   cairo_surface_destroy(recording_surface);
 }
 
+void drawInfoBox(State *state)
+{
+  cairo_save(state->cr);
+  cairo_identity_matrix(state->cr);
+  cairo_set_source_rgb(state->cr, 0, 0, 0);
+  cairo_set_font_size(state->cr, 13);
+  cairo_move_to(state->cr, 10, 20);
+  cairo_show_text(state->cr, "Hello Bro");
+  cairo_surface_flush(state->cairo_surface);
+  SDL_UpdateWindowSurface(state->window);
+  cairo_restore(state->cr);
+}
+
 void drawing(State *state, std::string filename){
   double x0, y0, width, height, x1, y1;
   calculateBoundingBox(filename, &x0, &y0, &width, &height);
@@ -225,6 +238,7 @@ void drawing(State *state, std::string filename){
   y1 = y0 + height - 1;
   drawSVGDocument(state, filename);
   drawRectangle(state, x0, y0, x1, y1, Color{1.0, 0.0, 0.0});
+  drawInfoBox(state);
 }
 
 
@@ -233,8 +247,8 @@ int main(int argc, char** argv)
   if (argc != 2)
     return 1;
 
-  int width = 500;
-  int height = 500;
+  int width = 1000;
+  int height = 1000;
 
   State state;
   state.x0 = 0;
