@@ -1,16 +1,31 @@
 #include <iostream>
 #include <fstream>
 #include <memory>
+#include <cstring>
 
 #include <SDL2/SDL.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <cairo.h>
+#include <librsvg/rsvg.h>
 
 #include <SVGRenderer.h>
 #include <SVGDocument.h>
 #include <CairoSVGRenderer.h>
 
+typedef enum _SVGRenderer {
+  SNV = 0,
+  LIBRSVG = 1
+} SVGRenderer;
+
+typedef enum _GraphicsEngine {
+  CAIRO = 0,
+  SKIA = 1
+} GraphicsEngine;
+
 typedef struct _State {
+  std::string filename;
+  SVGRenderer renderer;
+  GraphicsEngine engine;
   SDL_Window *window;
   SDL_Surface *sdl_surface;
   cairo_surface_t *cairo_surface;
@@ -92,7 +107,7 @@ void clearCanvas(State *state)
   SDL_UpdateWindowSurface(state->window);
 }
 
-void drawSVGDocument(State *state, std::string filename)
+void drawSVGDocumentSNV(State *state, std::string filename)
 {
   auto renderer = std::make_shared<SVGNative::CairoSVGRenderer>();
 
@@ -110,6 +125,32 @@ void drawSVGDocument(State *state, std::string filename)
 
   cairo_surface_flush(state->cairo_surface);
   SDL_UpdateWindowSurface(state->window);
+}
+
+void drawSVGDocumentLibrsvg(State *state, std::string filename)
+{
+  std::ifstream svg_file(filename);
+
+  std::string svg_doc = "";
+  std::string line;
+  while (std::getline(svg_file, line)) {
+    svg_doc += line;
+  }
+
+  GError *error;
+  RsvgHandle *handle = rsvg_handle_new_from_data((const unsigned char*)svg_doc.c_str(), strlen(svg_doc.c_str()), &error);
+  rsvg_handle_render_cairo(handle, state->cr);
+
+  cairo_surface_flush(state->cairo_surface);
+  SDL_UpdateWindowSurface(state->window);
+}
+
+void drawSVGDocument(State *state, std::string filename)
+{
+  if (state->renderer == SNV)
+    drawSVGDocumentSNV(state, filename);
+  else if(state->renderer == LIBRSVG)
+    drawSVGDocumentLibrsvg(state, filename);
 }
 
 void drawRectangle(State *state, double x0, double y0, double x1, double y1, Color color) {
@@ -240,10 +281,30 @@ void drawInfoBox(State *state)
   cairo_identity_matrix(state->cr);
   cairo_set_source_rgb(state->cr, 0, 0, 0);
   cairo_set_font_size(state->cr, 13);
-  cairo_move_to(state->cr, 10, 20);
-  char characters[100];
+  char characters[500];
+
   sprintf(characters, "Viewbox: %f %f %f %f", state->x0, state->y0, state->x1, state->y1);
+  cairo_move_to(state->cr, 10, 20);
   cairo_show_text(state->cr, characters);
+  if (state->render_recording)
+    sprintf(characters, "Rendering Mode: Raster (frozen)");
+  else
+    sprintf(characters, "Rendering Mode: Vector");
+  cairo_move_to(state->cr, 10, 35);
+  cairo_show_text(state->cr, characters);
+
+  sprintf(characters, "Filename: %s", state->filename.c_str());
+  cairo_move_to(state->cr, 10, 50);
+  cairo_show_text(state->cr, characters);
+
+  if (state->renderer == SNV)
+    sprintf(characters, "Renderer: SNV");
+  else
+    sprintf(characters, "Renderer: LIBRSVG");
+
+  cairo_move_to(state->cr, 10, 65);
+  cairo_show_text(state->cr, characters);
+
   cairo_surface_flush(state->cairo_surface);
   SDL_UpdateWindowSurface(state->window);
   cairo_restore(state->cr);
@@ -277,6 +338,9 @@ int main(int argc, char** argv)
   state.scale_x = 1;
   state.scale_y = 1;
   state.render_recording = false;
+  state.filename = std::string(argv[1]);
+  state.renderer = SNV;
+  state.engine = CAIRO;
 
   if (initialize(&state, width, height))
     return 1;
@@ -410,6 +474,21 @@ int main(int argc, char** argv)
         }
         else if(ke.keysym.scancode == 98)
         {
+          clearCanvas(&state);
+          resetTransform(&state);
+          setTransform(&state);
+          if (state.render_recording)
+            drawRecording(&state);
+          else
+            drawing(&state, std::string(argv[1]));
+          drawInfoBox(&state);
+        }
+        else if(ke.keysym.scancode == 21)
+        {
+          if (state.renderer == SNV)
+            state.renderer = LIBRSVG;
+          else
+            state.renderer = SNV;
           clearCanvas(&state);
           resetTransform(&state);
           setTransform(&state);
