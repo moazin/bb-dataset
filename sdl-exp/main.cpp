@@ -15,6 +15,7 @@
 #include <core/SkImage.h>
 #include <core/SkStream.h>
 #include <core/SkSurface.h>
+#include <core/SkCanvas.h>
 #include <SVGDocument.h>
 #include <SkiaSVGRenderer.h>
 
@@ -47,6 +48,8 @@ typedef struct _State {
   bool render_recording;
   GdkPixbuf *pixbuf;
   GdkPixbuf *saved_pixbuf;
+  sk_sp<SkSurface> skSurface;
+  SkCanvas* skCanvas;
 } State;
 
 typedef struct _Color {
@@ -86,6 +89,11 @@ int initialize(State *state, int width, int height) {
   state->saved_pixbuf = gdk_pixbuf_new_from_data((const unsigned char*)data, GDK_COLORSPACE_RGB, true, 8, state->sdl_surface->w,
                                                  state->sdl_surface->h, state->sdl_surface->pitch, NULL, NULL);
   state->cr = cairo_create(state->cairo_surface);
+
+  SkImageInfo skImageInfo = SkImageInfo::Make(state->width, state->height, kBGRA_8888_SkColorType, kOpaque_SkAlphaType, nullptr);
+  state->skSurface = SkSurface::MakeRasterDirect(skImageInfo, state->sdl_surface->pixels, state->sdl_surface->pitch, nullptr);
+  state->skCanvas = state->skSurface->getCanvas();
+
   cairo_set_source_rgb(state->cr, 1.0, 1.0, 1.0);
   cairo_move_to(state->cr, 0, 0);
   cairo_line_to(state->cr, 0, 999);
@@ -125,15 +133,11 @@ void drawSVGDocumentSNVCairo(State *state, std::string svg_doc)
 
 void drawSVGDocumentSNVSkia(State *state, std::string svg_doc)
 {
-  SkImageInfo skImageInfo = SkImageInfo::Make(state->width, state->height, kRGB_888x_SkColorType, kOpaque_SkAlphaType, nullptr);
   auto renderer = std::make_shared<SVGNative::SkiaSVGRenderer>();
 
   auto doc = std::unique_ptr<SVGNative::SVGDocument>(SVGNative::SVGDocument::CreateSVGDocument(svg_doc.c_str(), renderer));
 
-  auto skRasterSurface = SkSurface::MakeRasterDirect(skImageInfo, state->sdl_surface->pixels, state->sdl_surface->pitch, nullptr);
-  auto skRasterCanvas = skRasterSurface->getCanvas();
-
-  renderer->SetSkCanvas(skRasterCanvas);
+  renderer->SetSkCanvas(state->skCanvas);
   doc->Render();
 }
 
@@ -258,6 +262,9 @@ void setTransform(State *state)
   double scale_y = state->height/height_box;
   cairo_scale(state->cr, scale_x, scale_y);
   cairo_translate(state->cr, -1 * state->x0, -1 * state->y0);
+  state->skCanvas->resetMatrix();
+  state->skCanvas->scale(scale_x, scale_y);
+  state->skCanvas->translate(-1 * state->x0, -1 * state->y0);
 }
 
 void drawRecording(State *state)
@@ -520,7 +527,6 @@ int main(int argc, char** argv)
           else
             state.renderer = SNV;
           clearCanvas(&state);
-          resetTransform(&state);
           setTransform(&state);
           if (state.render_recording)
             drawRecording(&state);
@@ -533,7 +539,6 @@ int main(int argc, char** argv)
           if (state.renderer == SNV)
             state.engine = state.engine == CAIRO ? SKIA : CAIRO;
           clearCanvas(&state);
-          resetTransform(&state);
           setTransform(&state);
           if (state.render_recording)
             drawRecording(&state);
