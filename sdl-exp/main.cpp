@@ -11,6 +11,12 @@
 #include <SVGRenderer.h>
 #include <SVGDocument.h>
 #include <CairoSVGRenderer.h>
+#include <core/SkData.h>
+#include <core/SkImage.h>
+#include <core/SkStream.h>
+#include <core/SkSurface.h>
+#include <SVGDocument.h>
+#include <SkiaSVGRenderer.h>
 
 typedef enum _SVGRenderer {
   SNV = 0,
@@ -107,50 +113,64 @@ void clearCanvas(State *state)
   SDL_UpdateWindowSurface(state->window);
 }
 
-void drawSVGDocumentSNV(State *state, std::string filename)
+void drawSVGDocumentSNVCairo(State *state, std::string svg_doc)
 {
   auto renderer = std::make_shared<SVGNative::CairoSVGRenderer>();
-
-  std::ifstream svg_file(filename);
-
-  std::string svg_doc = "";
-  std::string line;
-  while (std::getline(svg_file, line)) {
-    svg_doc += line;
-  }
-
   auto doc = std::unique_ptr<SVGNative::SVGDocument>(SVGNative::SVGDocument::CreateSVGDocument(svg_doc.c_str(), renderer));
   renderer->SetCairo(state->cr);
   doc->Render();
 
   cairo_surface_flush(state->cairo_surface);
-  SDL_UpdateWindowSurface(state->window);
 }
 
-void drawSVGDocumentLibrsvg(State *state, std::string filename)
+void drawSVGDocumentSNVSkia(State *state, std::string svg_doc)
+{
+  SkImageInfo skImageInfo = SkImageInfo::Make(state->width, state->height, kRGB_888x_SkColorType, kOpaque_SkAlphaType, nullptr);
+  auto renderer = std::make_shared<SVGNative::SkiaSVGRenderer>();
+
+  auto doc = std::unique_ptr<SVGNative::SVGDocument>(SVGNative::SVGDocument::CreateSVGDocument(svg_doc.c_str(), renderer));
+
+  auto skRasterSurface = SkSurface::MakeRasterDirect(skImageInfo, state->sdl_surface->pixels, state->sdl_surface->pitch, nullptr);
+  auto skRasterCanvas = skRasterSurface->getCanvas();
+
+  renderer->SetSkCanvas(skRasterCanvas);
+  doc->Render();
+}
+
+void drawSVGDocumentSNV(State *state, std::string svg_doc)
+{
+  if (state->engine == CAIRO)
+    drawSVGDocumentSNVCairo(state, svg_doc);
+  else if(state->engine == SKIA)
+    drawSVGDocumentSNVSkia(state, svg_doc);
+}
+
+void drawSVGDocumentLibrsvg(State *state, std::string svg_doc)
+{
+  GError *error = nullptr;
+  RsvgHandle *handle = rsvg_handle_new_from_data((const unsigned char*)svg_doc.c_str(), strlen(svg_doc.c_str()), &error);
+  rsvg_handle_render_cairo(handle, state->cr);
+  cairo_surface_flush(state->cairo_surface);
+}
+
+void drawSVGDocument(State *state, std::string filename)
 {
   std::ifstream svg_file(filename);
 
   std::string svg_doc = "";
   std::string line;
+
   while (std::getline(svg_file, line)) {
     svg_doc += line;
   }
 
-  GError *error;
-  RsvgHandle *handle = rsvg_handle_new_from_data((const unsigned char*)svg_doc.c_str(), strlen(svg_doc.c_str()), &error);
-  rsvg_handle_render_cairo(handle, state->cr);
-
-  cairo_surface_flush(state->cairo_surface);
-  SDL_UpdateWindowSurface(state->window);
-}
-
-void drawSVGDocument(State *state, std::string filename)
-{
   if (state->renderer == SNV)
-    drawSVGDocumentSNV(state, filename);
+    drawSVGDocumentSNV(state, svg_doc);
   else if(state->renderer == LIBRSVG)
-    drawSVGDocumentLibrsvg(state, filename);
+    drawSVGDocumentLibrsvg(state, svg_doc);
+
+  svg_file.close();
+  SDL_UpdateWindowSurface(state->window);
 }
 
 void drawRectangle(State *state, double x0, double y0, double x1, double y1, Color color) {
@@ -301,9 +321,19 @@ void drawInfoBox(State *state)
     sprintf(characters, "Renderer: SNV");
   else
     sprintf(characters, "Renderer: LIBRSVG");
-
   cairo_move_to(state->cr, 10, 65);
   cairo_show_text(state->cr, characters);
+
+  if (state->renderer == SNV)
+  {
+    if (state->engine == CAIRO)
+      sprintf(characters, "Graphics Engine: Cairo");
+    else
+      sprintf(characters, "Graphics Engine: Skia");
+    cairo_move_to(state->cr, 10, 80);
+    cairo_show_text(state->cr, characters);
+  }
+
 
   cairo_surface_flush(state->cairo_surface);
   SDL_UpdateWindowSurface(state->window);
@@ -489,6 +519,19 @@ int main(int argc, char** argv)
             state.renderer = LIBRSVG;
           else
             state.renderer = SNV;
+          clearCanvas(&state);
+          resetTransform(&state);
+          setTransform(&state);
+          if (state.render_recording)
+            drawRecording(&state);
+          else
+            drawing(&state, std::string(argv[1]));
+          drawInfoBox(&state);
+        }
+        else if(ke.keysym.scancode == 23)
+        {
+          if (state.renderer == SNV)
+            state.engine = state.engine == CAIRO ? SKIA : CAIRO;
           clearCanvas(&state);
           resetTransform(&state);
           setTransform(&state);
