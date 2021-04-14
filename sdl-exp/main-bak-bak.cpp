@@ -359,15 +359,27 @@ void drawInfoBox(State *state)
 }
 
 void drawing(State *state, std::string filename){
+  /*
   double x0, y0, width, height, x1, y1;
   calculateBoundingBox(filename, &x0, &y0, &width, &height);
   x1 = x0 + width - 1;
   y1 = y0 + height - 1;
   std::vector<SVGNative::RectT> boxes = drawSVGDocument(state, filename);
   for(auto box: boxes) {
-    drawRectangle(state, box.x0, box.y0, box.x1, box.y1, Color{0.0, 1.0, 0.0});
-    printf("pushed -> [%f %f %f %f]\n", box.x0, box.y0, box.x1, box.y1);
+    drawRectangle(state, box.x0, box.y0, box.x1, box.y1, Color{1.0, 0.0, 0.0});
+    printf("[%f %f %f %f]\n", box.x0, box.y0, box.x1, box.y1);
   }
+  */
+  cairo_set_source_rgb(state->cr, 0.5, 1.0, 0.5);
+  //cairo_identity_matrix(state->cr);
+  cairo_rotate(state->cr, -0.2);
+  cairo_rectangle(state->cr, 400, 400, 100, 100);
+  SVGNative::RectT bbox;
+  cairo_fill_extents(state->cr, &bbox.x0, &bbox.y0, &bbox.x1, &bbox.y1);
+  cairo_fill(state->cr);
+  cairo_identity_matrix(state->cr);
+  drawRectangle(state, bbox.x0, bbox.y0, bbox.x1, bbox.y1, Color{1.0, 0.0, 0.0});
+  cairo_surface_flush(state->cairo_surface);
 }
 
 
@@ -409,162 +421,6 @@ int main(int argc, char** argv)
         SDL_KeyboardEvent ke = event.key;
         if(ke.keysym.scancode == 20)
           break;
-        else if(ke.keysym.scancode == 87)
-        {
-          clearCanvas(&state);
-          zoomInTransform(&state);
-          setTransform(&state);
-          if (state.render_recording)
-            drawRecording(&state);
-          else
-            drawing(&state, std::string(argv[1]));
-          drawInfoBox(&state);
-        }
-        else if(ke.keysym.scancode == 86)
-        {
-          clearCanvas(&state);
-          zoomOutTransform(&state);
-          setTransform(&state);
-          if (state.render_recording)
-            drawRecording(&state);
-          else
-            drawing(&state, std::string(argv[1]));
-          drawInfoBox(&state);
-        }
-        else if(ke.keysym.scancode == 82)
-        {
-          /* up */
-          clearCanvas(&state);
-          moveTransform(&state, 0, -1);
-          setTransform(&state);
-          if (state.render_recording)
-            drawRecording(&state);
-          else
-            drawing(&state, std::string(argv[1]));
-          drawInfoBox(&state);
-        }
-        else if(ke.keysym.scancode == 80)
-        {
-          /* left */
-          clearCanvas(&state);
-          moveTransform(&state, -1, 0);
-          setTransform(&state);
-          if (state.render_recording)
-            drawRecording(&state);
-          else
-            drawing(&state, std::string(argv[1]));
-          drawInfoBox(&state);
-        }
-        else if(ke.keysym.scancode == 81)
-        {
-          /* down */
-          clearCanvas(&state);
-          moveTransform(&state, 0, 1);
-          setTransform(&state);
-          if (state.render_recording)
-            drawRecording(&state);
-          else
-            drawing(&state, std::string(argv[1]));
-          drawInfoBox(&state);
-        }
-        else if(ke.keysym.scancode == 79)
-        {
-          /* right */
-          clearCanvas(&state);
-          moveTransform(&state, 1, 0);
-          setTransform(&state);
-          if (state.render_recording)
-            drawRecording(&state);
-          else
-            drawing(&state, std::string(argv[1]));
-          drawInfoBox(&state);
-        }
-        else if(ke.keysym.scancode == 15)
-        {
-          clearCanvas(&state);
-          setTransform(&state);
-          drawing(&state, std::string(argv[1]));
-          unsigned char* c_data = cairo_image_surface_get_data(state.cairo_surface);
-          int c_width = cairo_image_surface_get_width(state.cairo_surface);
-          int c_height = cairo_image_surface_get_height(state.cairo_surface);
-          int c_pitch = cairo_image_surface_get_stride(state.cairo_surface);
-          int c_offset = c_pitch / c_width;
-          unsigned char* g_data = gdk_pixbuf_get_pixels(state.saved_pixbuf);
-          int g_width = gdk_pixbuf_get_width(state.saved_pixbuf);
-          int g_height = gdk_pixbuf_get_height(state.saved_pixbuf);
-          int g_pitch = gdk_pixbuf_get_rowstride(state.saved_pixbuf);
-          int g_offset = g_pitch / g_width;
-          for(int i = 0; i < c_height; i++) {
-            for(int j = 0; j < c_width; j++){
-              *(g_data + (i * g_pitch) + j*g_offset) = *(c_data + (i * c_pitch) + j*4);
-              *(g_data + (i * g_pitch) + j*g_offset + 1) = *(c_data + (i * c_pitch) + j*4 + 1);
-              *(g_data + (i * g_pitch) + j*g_offset + 2) = *(c_data + (i * c_pitch) + j*4 + 2);
-            }
-          }
-          state.render_recording = true;
-          state.x0 = 0;
-          state.y0 = 0;
-          state.x1 = state.width - 1;
-          state.y1 = state.height - 1;
-          clearCanvas(&state);
-          setTransform(&state);
-          drawRecording(&state);
-          drawInfoBox(&state);
-        }
-        else if(ke.keysym.scancode == 24)
-        {
-          state.render_recording = false;
-          state.x0 = 0;
-          state.y0 = 0;
-          state.x1 = state.width - 1;
-          state.y1 = state.height - 1;
-          clearCanvas(&state);
-          setTransform(&state);
-          drawing(&state, std::string(argv[1]));
-          drawInfoBox(&state);
-        }
-        else if(ke.keysym.scancode == 98)
-        {
-          clearCanvas(&state);
-          resetTransform(&state);
-          setTransform(&state);
-          if (state.render_recording)
-            drawRecording(&state);
-          else
-            drawing(&state, std::string(argv[1]));
-          drawInfoBox(&state);
-        }
-        else if(ke.keysym.scancode == 21)
-        {
-          if (state.renderer == SNV)
-            state.renderer = LIBRSVG;
-          else
-            state.renderer = SNV;
-          clearCanvas(&state);
-          setTransform(&state);
-          if (state.render_recording)
-            drawRecording(&state);
-          else
-            drawing(&state, std::string(argv[1]));
-          drawInfoBox(&state);
-        }
-        else if(ke.keysym.scancode == 23)
-        {
-          if (state.renderer == SNV)
-            state.engine = state.engine == CAIRO ? SKIA : CAIRO;
-          clearCanvas(&state);
-          setTransform(&state);
-          if (state.render_recording)
-            drawRecording(&state);
-          else
-            drawing(&state, std::string(argv[1]));
-          drawInfoBox(&state);
-        }
-        else if(ke.keysym.scancode == 22)
-        {
-          cairo_surface_write_to_png(state.cairo_surface, "output.png");
-          printf("done\n");
-        }
         else
           printf("%d\n", ke.keysym.scancode);
       }
