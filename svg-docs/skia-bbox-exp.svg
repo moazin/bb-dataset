@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink= "http://www.w3.org/1999/xlink" xmlns:svg="http://www.w3.org/2000/svg" viewBox=" 0 0 1000 1000">
+  <rect x="500" y="500" width="100" height="100" id="myCircle"/>
+  <use xlink:href="#myCircle" x="200" fill="red"/>
+  <use xlink:href="#myCircle" y="200" fill="blue"/>
+  <use xlink:href="#myCircle" x="-200" fill="green"/>
+  <use xlink:href="#myCircle" y="-200" fill="yellow"/>
+</svg>
