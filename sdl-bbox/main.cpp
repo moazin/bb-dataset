@@ -52,6 +52,9 @@ typedef struct _State {
   GdkPixbuf *saved_pixbuf;
   sk_sp<SkSurface> skSurface;
   SkCanvas* skCanvas;
+  std::vector<std::string> test_names;
+  int total_tests;
+  int current_test;
 } State;
 
 typedef struct _Color {
@@ -106,6 +109,33 @@ int initialize(State *state, int width, int height) {
   cairo_surface_flush(state->cairo_surface);
   SDL_UpdateWindowSurface(state->window);
 
+  state->test_names.push_back(std::string("Cairo test 1 - Simple Rectangle Fill"));
+  state->test_names.push_back(std::string("Cairo test 2 - Simple Rectangle Stroke"));
+  state->test_names.push_back(std::string("Cairo test 3 - Simple Cubic Bezier Fill"));
+  state->test_names.push_back(std::string("Cairo test 4 - Simple Cubic Bezier Stroke Bevel"));
+  state->test_names.push_back(std::string("Cairo test 5 - Simple Cubic Bezier Stroke Round"));
+  state->test_names.push_back(std::string("Cairo test 6 - Simple Cubic Bezier Stroke Miter (20)"));
+  state->test_names.push_back(std::string("Cairo test 7 - Simple Arc Fill"));
+  state->test_names.push_back(std::string("Cairo test 8 - Rectangle Rotate Fill"));
+  state->test_names.push_back(std::string("Cairo test 9 - Clipping of Shape Simple"));
+  state->test_names.push_back(std::string("Cairo test 10 - Bounds of Curves with thick strokes Butt"));
+  state->test_names.push_back(std::string("Cairo test 11 - Bounds of Curves with thick strokes Square"));
+  state->test_names.push_back(std::string("Cairo test 12 - Bounds of Curves with thick strokes Round"));
+  state->test_names.push_back(std::string("Skia test 1 - Simple Rectangle Fill"));
+  state->test_names.push_back(std::string("Skia test 2 - Simple Rectangle Stroke"));
+  state->test_names.push_back(std::string("Skia test 3 - Simple Cubic Bezier Fill"));
+  state->test_names.push_back(std::string("Skia test 4 - Simple Cubic Bezier Stroke Bevel"));
+  state->test_names.push_back(std::string("Skia test 5 - Simple Cubic Bezier Stroke Round"));
+  state->test_names.push_back(std::string("Skia test 6 - Simple Cubic Bezier Stroke Miter (20)"));
+  state->test_names.push_back(std::string("Skia test 7 - Simple Arc Fill"));
+  state->test_names.push_back(std::string("Skia test 8 - Rectangle Rotate Fill"));
+  state->test_names.push_back(std::string("Skia test 9 - Rectangle Rotate Stroke"));
+  state->test_names.push_back(std::string("Skia test 10 - Clipping of Shape Simple"));
+  state->test_names.push_back(std::string("Skia test 11 - Bounds of Curves with thick strokes Butt"));
+  state->test_names.push_back(std::string("Skia test 12 - Bounds of Curves with thick strokes Square"));
+  state->test_names.push_back(std::string("Skia test 13 - Bounds of Curves with thick strokes Round"));
+  state->total_tests = 25;
+  state->current_test = 0;
   return 0;
 }
 
@@ -359,55 +389,835 @@ void drawInfoBox(State *state)
   cairo_set_font_size(state->cr, 13);
   char characters[500];
 
-  sprintf(characters, "Viewbox: %f %f %f %f", state->x0, state->y0, state->x1, state->y1);
+  sprintf(characters, "Test: %s", state->test_names[state->current_test].c_str());
   cairo_move_to(state->cr, 10, 20);
   cairo_show_text(state->cr, characters);
-  if (state->render_recording)
-    sprintf(characters, "Rendering Mode: Raster (frozen)");
-  else
-    sprintf(characters, "Rendering Mode: Vector");
+
+  sprintf(characters, "Test Number: %d", state->current_test);
   cairo_move_to(state->cr, 10, 35);
   cairo_show_text(state->cr, characters);
 
-  sprintf(characters, "Filename: %s", state->filename.c_str());
+  sprintf(characters, "Total Tests: %d", state->total_tests);
   cairo_move_to(state->cr, 10, 50);
   cairo_show_text(state->cr, characters);
-
-  if (state->renderer == SNV)
-    sprintf(characters, "Renderer: SNV");
-  else
-    sprintf(characters, "Renderer: LIBRSVG");
-  cairo_move_to(state->cr, 10, 65);
-  cairo_show_text(state->cr, characters);
-
-  if (state->renderer == SNV)
-  {
-    if (state->engine == CAIRO)
-      sprintf(characters, "Graphics Engine: Cairo");
-    else
-      sprintf(characters, "Graphics Engine: Skia");
-    cairo_move_to(state->cr, 10, 80);
-    cairo_show_text(state->cr, characters);
-  }
-
 
   cairo_surface_flush(state->cairo_surface);
   SDL_UpdateWindowSurface(state->window);
   cairo_restore(state->cr);
 }
 
-void drawing(State *state, std::string filename){
-  double x0, y0, width, height, x1, y1;
-  calculateBoundingBox(filename, &x0, &y0, &width, &height);
-  x1 = x0 + width - 1;
-  y1 = y0 + height - 1;
-  std::vector<SVGNative::RectT> boxes = drawSVGDocument(state, filename);
-  /*
-  drawRectangle(state, x0, y0, x0 + width - 1, y0 + height - 1, Color{0.0, 1.0, 0.0});
-  */
-  for(auto box: boxes) {
-    drawRectangle(state, box.x0, box.y0, box.x1, box.y1, Color{0.0, 1.0, 0.0});
-    printf("pushed -> [%f %f %f %f]\n", box.x0, box.y0, box.x1, box.y1);
+void SkiaTestRectangleFill(State *state){
+  SkPath path;
+  path.moveTo(100, 100);
+  path.lineTo(400, 100);
+  path.lineTo(400, 400);
+  path.lineTo(100, 400);
+  path.close();
+  SkPaint fill_paint;
+  fill_paint.setAntiAlias(true);
+  fill_paint.setColor(SK_ColorRED);
+  fill_paint.setStyle(SkPaint::kFill_Style);
+  state->skCanvas->drawPath(path, fill_paint);
+
+  SkRect tightBounds = path.computeTightBounds();
+
+  SkPaint bbox_paint;
+  bbox_paint.setAntiAlias(true);
+  bbox_paint.setColor(SK_ColorBLUE);
+  bbox_paint.setStyle(SkPaint::kStroke_Style);
+  state->skCanvas->drawRect(tightBounds, bbox_paint);
+
+  SDL_UpdateWindowSurface(state->window);
+}
+
+void SkiaTestRectangleStroke(State *state){
+  SkPath path;
+  path.moveTo(100, 100);
+  path.lineTo(400, 100);
+  path.lineTo(400, 400);
+  path.lineTo(100, 400);
+  path.close();
+  SkPaint fill_paint;
+  fill_paint.setAntiAlias(true);
+  fill_paint.setColor(SK_ColorRED);
+  fill_paint.setStyle(SkPaint::kFill_Style);
+  state->skCanvas->drawPath(path, fill_paint);
+  SkPaint stroke_paint;
+  stroke_paint.setAntiAlias(true);
+  stroke_paint.setColor(SK_ColorGREEN);
+  stroke_paint.setStyle(SkPaint::kStroke_Style);
+  stroke_paint.setStrokeWidth(40);
+  stroke_paint.setStrokeJoin(SkPaint::kDefault_Join);
+  state->skCanvas->drawPath(path, stroke_paint);
+
+  SkRect tightBounds = path.computeTightBounds();
+
+  if (stroke_paint.canComputeFastBounds()) {
+    tightBounds = stroke_paint.computeFastBounds(tightBounds, &tightBounds);
+  }
+
+  SkPaint bbox_paint;
+  bbox_paint.setAntiAlias(true);
+  bbox_paint.setColor(SK_ColorBLUE);
+  bbox_paint.setStyle(SkPaint::kStroke_Style);
+  state->skCanvas->drawRect(tightBounds, bbox_paint);
+
+  SDL_UpdateWindowSurface(state->window);
+}
+
+void SkiaTestCubicFill(State *state)
+{
+  SkPath path;
+  path.moveTo(100, 100);
+  path.lineTo(400, 100);
+  path.cubicTo(800, 100, 800, 400, 400, 400);
+  path.lineTo(800, 400);
+  path.cubicTo(400, 400, 400, 800, 800, 800);
+  path.cubicTo(800, 900, 100, 900, 100, 800);
+  path.close();
+  SkPaint fill_paint;
+  fill_paint.setAntiAlias(true);
+  fill_paint.setColor(SK_ColorRED);
+  fill_paint.setStyle(SkPaint::kFill_Style);
+  state->skCanvas->drawPath(path, fill_paint);
+
+  SkRect tightBounds = path.computeTightBounds();
+
+  SkPaint bbox_paint;
+  bbox_paint.setAntiAlias(true);
+  bbox_paint.setColor(SK_ColorBLUE);
+  bbox_paint.setStyle(SkPaint::kStroke_Style);
+  state->skCanvas->drawRect(tightBounds, bbox_paint);
+
+  SDL_UpdateWindowSurface(state->window);
+}
+
+void SkiaTestCubicStrokeBevel(State *state)
+{
+  SkPath path;
+  path.moveTo(100, 100);
+  path.lineTo(400, 100);
+  path.cubicTo(800, 100, 800, 400, 400, 400);
+  path.lineTo(800, 400);
+  path.cubicTo(400, 400, 400, 800, 800, 800);
+  path.cubicTo(800, 900, 100, 900, 100, 800);
+  path.close();
+  SkPaint fill_paint;
+  fill_paint.setAntiAlias(true);
+  fill_paint.setColor(SK_ColorRED);
+  fill_paint.setStyle(SkPaint::kFill_Style);
+  state->skCanvas->drawPath(path, fill_paint);
+  SkPaint stroke_paint;
+  stroke_paint.setAntiAlias(true);
+  stroke_paint.setColor(SK_ColorGREEN);
+  stroke_paint.setStyle(SkPaint::kStroke_Style);
+  stroke_paint.setStrokeWidth(50);
+  stroke_paint.setStrokeJoin(SkPaint::kBevel_Join);
+  state->skCanvas->drawPath(path, stroke_paint);
+
+  SkRect tightBounds = path.computeTightBounds();
+
+  if (stroke_paint.canComputeFastBounds()) {
+    tightBounds = stroke_paint.computeFastBounds(tightBounds, &tightBounds);
+  }
+
+  SkPaint bbox_paint;
+  bbox_paint.setAntiAlias(true);
+  bbox_paint.setColor(SK_ColorBLUE);
+  bbox_paint.setStyle(SkPaint::kStroke_Style);
+  state->skCanvas->drawRect(tightBounds, bbox_paint);
+
+  SDL_UpdateWindowSurface(state->window);
+}
+
+void SkiaTestCubicStrokeRound(State *state)
+{
+  SkPath path;
+  path.moveTo(100, 100);
+  path.lineTo(400, 100);
+  path.cubicTo(800, 100, 800, 400, 400, 400);
+  path.lineTo(800, 400);
+  path.cubicTo(400, 400, 400, 800, 800, 800);
+  path.cubicTo(800, 900, 100, 900, 100, 800);
+  path.close();
+  SkPaint fill_paint;
+  fill_paint.setAntiAlias(true);
+  fill_paint.setColor(SK_ColorRED);
+  fill_paint.setStyle(SkPaint::kFill_Style);
+  state->skCanvas->drawPath(path, fill_paint);
+  SkPaint stroke_paint;
+  stroke_paint.setAntiAlias(true);
+  stroke_paint.setColor(SK_ColorGREEN);
+  stroke_paint.setStyle(SkPaint::kStroke_Style);
+  stroke_paint.setStrokeWidth(50);
+  stroke_paint.setStrokeJoin(SkPaint::kRound_Join);
+  state->skCanvas->drawPath(path, stroke_paint);
+
+  SkRect tightBounds = path.computeTightBounds();
+
+  if (stroke_paint.canComputeFastBounds()) {
+    tightBounds = stroke_paint.computeFastBounds(tightBounds, &tightBounds);
+  }
+
+  SkPaint bbox_paint;
+  bbox_paint.setAntiAlias(true);
+  bbox_paint.setColor(SK_ColorBLUE);
+  bbox_paint.setStyle(SkPaint::kStroke_Style);
+  state->skCanvas->drawRect(tightBounds, bbox_paint);
+
+  SDL_UpdateWindowSurface(state->window);
+}
+
+void SkiaTestCubicStrokeMiter(State *state)
+{
+  SkPath path;
+  path.moveTo(100, 100);
+  path.lineTo(400, 100);
+  path.cubicTo(800, 100, 800, 400, 400, 400);
+  path.lineTo(800, 400);
+  path.cubicTo(400, 400, 400, 800, 800, 800);
+  path.cubicTo(800, 900, 100, 900, 100, 800);
+  path.close();
+  SkPaint fill_paint;
+  fill_paint.setAntiAlias(true);
+  fill_paint.setColor(SK_ColorRED);
+  fill_paint.setStyle(SkPaint::kFill_Style);
+  state->skCanvas->drawPath(path, fill_paint);
+  SkPaint stroke_paint;
+  stroke_paint.setAntiAlias(true);
+  stroke_paint.setColor(SK_ColorGREEN);
+  stroke_paint.setStyle(SkPaint::kStroke_Style);
+  stroke_paint.setStrokeWidth(20);
+  stroke_paint.setStrokeMiter(10);
+  stroke_paint.setStrokeJoin(SkPaint::kMiter_Join);
+  state->skCanvas->drawPath(path, stroke_paint);
+
+  SkRect tightBounds = path.computeTightBounds();
+
+  if (stroke_paint.canComputeFastBounds()) {
+    tightBounds = stroke_paint.computeFastBounds(tightBounds, &tightBounds);
+  }
+
+  SkPaint bbox_paint;
+  bbox_paint.setAntiAlias(true);
+  bbox_paint.setColor(SK_ColorBLUE);
+  bbox_paint.setStyle(SkPaint::kStroke_Style);
+  state->skCanvas->drawRect(tightBounds, bbox_paint);
+
+  SDL_UpdateWindowSurface(state->window);
+}
+
+void SkiaTestArcFill(State *state)
+{
+  SkPath path;
+  path.moveTo(100, 100);
+  path.arcTo(50, 100, 0, SkPath::kLarge_ArcSize, SkPathDirection::kCW, 100, 280);
+  path.close();
+  SkPaint fill_paint;
+  fill_paint.setAntiAlias(true);
+  fill_paint.setColor(SK_ColorRED);
+  fill_paint.setStyle(SkPaint::kFill_Style);
+  state->skCanvas->drawPath(path, fill_paint);
+
+  SkRect tightBounds = path.computeTightBounds();
+
+  SkPaint bbox_paint;
+  bbox_paint.setAntiAlias(true);
+  bbox_paint.setColor(SK_ColorBLUE);
+  bbox_paint.setStyle(SkPaint::kStroke_Style);
+  state->skCanvas->drawRect(tightBounds, bbox_paint);
+
+  SDL_UpdateWindowSurface(state->window);
+}
+
+void SkiaTestRectangleRotateFill(State *state)
+{
+  // prepare a rotate transform matrix
+  SkMatrix matrix;
+  matrix.setRotate(45, 500, 500);
+
+  SkPath path;
+  SkPath new_path;
+  path.moveTo(400, 400);
+  path.lineTo(600, 400);
+  path.lineTo(600, 600);
+  path.lineTo(400, 600);
+  path.close();
+  path.transform(matrix, &new_path);
+  SkPaint fill_paint;
+  fill_paint.setAntiAlias(true);
+  fill_paint.setColor(SK_ColorRED);
+  fill_paint.setStyle(SkPaint::kFill_Style);
+  state->skCanvas->drawPath(new_path, fill_paint);
+
+  SkRect tightBounds = new_path.computeTightBounds();
+
+  SkPaint bbox_paint;
+  bbox_paint.setAntiAlias(true);
+  bbox_paint.setColor(SK_ColorBLUE);
+  bbox_paint.setStyle(SkPaint::kStroke_Style);
+  state->skCanvas->drawRect(tightBounds, bbox_paint);
+
+  SDL_UpdateWindowSurface(state->window);
+}
+
+void SkiaTestRectangleRotateStroke(State *state)
+{
+  // prepare a rotate transform matrix
+  SkMatrix matrix;
+  matrix.setRotate(45, 500, 500);
+
+  SkPath path;
+  SkPath new_path;
+  path.moveTo(400, 400);
+  path.lineTo(600, 400);
+  path.lineTo(600, 600);
+  path.lineTo(400, 600);
+  path.close();
+  path.transform(matrix, &new_path);
+  SkPaint fill_paint;
+  fill_paint.setAntiAlias(true);
+  fill_paint.setColor(SK_ColorRED);
+  fill_paint.setStyle(SkPaint::kFill_Style);
+  state->skCanvas->drawPath(new_path, fill_paint);
+  SkPaint stroke_paint;
+  stroke_paint.setAntiAlias(true);
+  stroke_paint.setColor(SK_ColorGREEN);
+  stroke_paint.setStyle(SkPaint::kStroke_Style);
+  stroke_paint.setStrokeWidth(20);
+  stroke_paint.setStrokeJoin(SkPaint::kRound_Join);
+  state->skCanvas->drawPath(new_path, stroke_paint);
+
+  SkRect tightBounds = new_path.computeTightBounds();
+  if (stroke_paint.canComputeFastBounds()) {
+    tightBounds = stroke_paint.computeFastBounds(tightBounds, &tightBounds);
+  }
+
+
+  SkPaint bbox_paint;
+  bbox_paint.setAntiAlias(true);
+  bbox_paint.setColor(SK_ColorBLUE);
+  bbox_paint.setStyle(SkPaint::kStroke_Style);
+  state->skCanvas->drawRect(tightBounds, bbox_paint);
+
+  SDL_UpdateWindowSurface(state->window);
+}
+
+void SkiaTestClippingSimple(State *state)
+{
+  SkPath clip_path;
+  clip_path.moveTo(100, 100);
+  clip_path.cubicTo(700, 100, 700, 500, 100, 500);
+  clip_path.close();
+  SkPath path;
+  path.moveTo(700, 100);
+  path.cubicTo(100, 100, 100, 500, 700, 500);
+  path.close();
+
+
+  SkPaint fill_paint;
+  fill_paint.setAntiAlias(true);
+  fill_paint.setColor(SK_ColorRED);
+  fill_paint.setStyle(SkPaint::kFill_Style);
+  state->skCanvas->save();
+  state->skCanvas->clipPath(clip_path, true);
+  state->skCanvas->drawPath(path, fill_paint);
+  state->skCanvas->restore();
+
+  SkRect tightBounds = path.computeTightBounds();
+  SkRect tightBoundsClipPath = clip_path.computeTightBounds();
+
+
+  SkPaint bbox_paint;
+  bbox_paint.setAntiAlias(true);
+  bbox_paint.setColor(SK_ColorBLUE);
+  bbox_paint.setStyle(SkPaint::kStroke_Style);
+  state->skCanvas->drawRect(tightBounds, bbox_paint);
+  state->skCanvas->drawRect(tightBoundsClipPath, bbox_paint);
+
+  SDL_UpdateWindowSurface(state->window);
+}
+
+void SkiaTestStrokedCurveButt(State *state)
+{
+  SkPath path;
+  path.moveTo(100, 500);
+  path.cubicTo(300, 400, 300, 600, 400, 500);
+
+  SkPaint stroke_paint;
+  stroke_paint.setAntiAlias(true);
+  stroke_paint.setColor(SK_ColorGREEN);
+  stroke_paint.setStyle(SkPaint::kStroke_Style);
+  stroke_paint.setStrokeWidth(40);
+  stroke_paint.setStrokeJoin(SkPaint::kRound_Join);
+  stroke_paint.setStrokeCap(SkPaint::kButt_Cap);
+  state->skCanvas->drawPath(path, stroke_paint);
+
+  SkRect tightBounds = path.computeTightBounds();
+  if (stroke_paint.canComputeFastBounds()) {
+    tightBounds = stroke_paint.computeFastBounds(tightBounds, &tightBounds);
+  }
+
+  SkPaint bbox_paint;
+  bbox_paint.setAntiAlias(true);
+  bbox_paint.setColor(SK_ColorBLUE);
+  bbox_paint.setStyle(SkPaint::kStroke_Style);
+  state->skCanvas->drawRect(tightBounds, bbox_paint);
+
+  SDL_UpdateWindowSurface(state->window);
+}
+
+void SkiaTestStrokedCurveSquare(State *state)
+{
+  SkPath path;
+  path.moveTo(100, 500);
+  path.cubicTo(300, 400, 300, 600, 400, 500);
+
+  SkPaint stroke_paint;
+  stroke_paint.setAntiAlias(true);
+  stroke_paint.setColor(SK_ColorGREEN);
+  stroke_paint.setStyle(SkPaint::kStroke_Style);
+  stroke_paint.setStrokeWidth(40);
+  stroke_paint.setStrokeJoin(SkPaint::kRound_Join);
+  stroke_paint.setStrokeCap(SkPaint::kSquare_Cap);
+  state->skCanvas->drawPath(path, stroke_paint);
+
+  SkRect tightBounds = path.computeTightBounds();
+  if (stroke_paint.canComputeFastBounds()) {
+    tightBounds = stroke_paint.computeFastBounds(tightBounds, &tightBounds);
+  }
+
+  SkPaint bbox_paint;
+  bbox_paint.setAntiAlias(true);
+  bbox_paint.setColor(SK_ColorBLUE);
+  bbox_paint.setStyle(SkPaint::kStroke_Style);
+  state->skCanvas->drawRect(tightBounds, bbox_paint);
+
+  SDL_UpdateWindowSurface(state->window);
+}
+
+void SkiaTestStrokedCurveRound(State *state)
+{
+  SkPath path;
+  path.moveTo(100, 500);
+  path.cubicTo(300, 400, 300, 600, 400, 500);
+
+  SkPaint stroke_paint;
+  stroke_paint.setAntiAlias(true);
+  stroke_paint.setColor(SK_ColorGREEN);
+  stroke_paint.setStyle(SkPaint::kStroke_Style);
+  stroke_paint.setStrokeWidth(40);
+  stroke_paint.setStrokeJoin(SkPaint::kRound_Join);
+  stroke_paint.setStrokeCap(SkPaint::kRound_Cap);
+  state->skCanvas->drawPath(path, stroke_paint);
+
+  SkRect tightBounds = path.computeTightBounds();
+  if (stroke_paint.canComputeFastBounds()) {
+    tightBounds = stroke_paint.computeFastBounds(tightBounds, &tightBounds);
+  }
+
+  SkPaint bbox_paint;
+  bbox_paint.setAntiAlias(true);
+  bbox_paint.setColor(SK_ColorBLUE);
+  bbox_paint.setStyle(SkPaint::kStroke_Style);
+  state->skCanvas->drawRect(tightBounds, bbox_paint);
+
+  SDL_UpdateWindowSurface(state->window);
+}
+
+// Simple Rectangle from (100, 100) -> (399, 399)
+// filled with color Red
+void CairoTestRectangleFill(State *state){
+  cairo_set_source_rgb(state->cr, 1.0, 0.0, 0.0);
+  cairo_rectangle(state->cr, 100, 100, 300, 300);
+
+  double x0, y0, x1, y1;
+  cairo_fill_extents(state->cr, &x0, &y0, &x1, &y1);
+  cairo_fill(state->cr);
+
+  cairo_set_source_rgb(state->cr, 0.0, 0.0, 1.0);
+  cairo_rectangle(state->cr, x0, y0, x1 - x0 + 1, y1 - y0 + 1);
+  cairo_stroke(state->cr);
+
+  SDL_UpdateWindowSurface(state->window);
+}
+
+// Simple Rectangle from (100, 100) -> (399, 399)
+// Filled with Red color
+// Stroked with green color of width 40
+void CairoTestRectangleStroke(State *state){
+  cairo_set_source_rgb(state->cr, 1.0, 0.0, 0.0);
+  cairo_rectangle(state->cr, 100, 100, 300, 300);
+  cairo_fill(state->cr);
+  cairo_set_line_width(state->cr, 40);
+  cairo_set_source_rgb(state->cr, 0.0, 1.0, 0.0);
+  cairo_rectangle(state->cr, 100, 100, 300, 300);
+  double x0, y0, x1, y1;
+  cairo_stroke_extents(state->cr, &x0, &y0, &x1, &y1);
+  cairo_stroke(state->cr);
+
+  cairo_set_source_rgb(state->cr, 0.0, 0.0, 1.0);
+  cairo_set_line_width(state->cr, 1);
+  cairo_rectangle(state->cr, x0, y0, x1 - x0 + 1, y1 - y0 + 1);
+  cairo_stroke(state->cr);
+
+  SDL_UpdateWindowSurface(state->window);
+}
+
+// Cubic Bezier Curve (100, 100) l (400, 100) c (800, 100) (800, 400) (400, 400)
+// l (800, 400) c (400, 400) (400, 800) (800, 800) c (800, 900) (100, 900) (100, 800) Z
+// Filled with Red, no stroke
+void CairoTestCubicFill(State *state)
+{
+  cairo_set_source_rgb(state->cr, 1.0, 0.0, 0.0);
+  cairo_move_to(state->cr, 100, 100);
+  cairo_line_to(state->cr, 400, 100);
+  cairo_curve_to(state->cr, 800, 100, 800, 400, 400, 400);
+  cairo_line_to(state->cr, 800, 400);
+  cairo_curve_to(state->cr, 400, 400, 400, 800, 800, 800);
+  cairo_curve_to(state->cr, 800, 900, 100, 900, 100, 800);
+  cairo_close_path(state->cr);
+
+  double x0, y0, x1, y1;
+  cairo_fill_extents(state->cr, &x0, &y0, &x1, &y1);
+
+  cairo_fill(state->cr);
+
+  cairo_set_source_rgb(state->cr, 0.0, 0.0, 1.0);
+  cairo_set_line_width(state->cr, 1);
+  cairo_rectangle(state->cr, x0, y0, x1 - x0 + 1, y1 - y0 + 1);
+  cairo_stroke(state->cr);
+
+  SDL_UpdateWindowSurface(state->window);
+}
+
+// Same Cubic Bezier but with a stroke of width 50 and join being
+// bevel and color being green
+void CairoTestCubicStrokeBevel(State *state)
+{
+  cairo_set_source_rgb(state->cr, 1.0, 0.0, 0.0);
+  cairo_move_to(state->cr, 100, 100);
+  cairo_line_to(state->cr, 400, 100);
+  cairo_curve_to(state->cr, 800, 100, 800, 400, 400, 400);
+  cairo_line_to(state->cr, 800, 400);
+  cairo_curve_to(state->cr, 400, 400, 400, 800, 800, 800);
+  cairo_curve_to(state->cr, 800, 900, 100, 900, 100, 800);
+  cairo_close_path(state->cr);
+  cairo_fill(state->cr);
+
+  cairo_set_source_rgb(state->cr, 0.0, 1.0, 0.0);
+  cairo_set_line_width(state->cr, 50);
+  cairo_set_line_join(state->cr, CAIRO_LINE_JOIN_BEVEL);
+  cairo_move_to(state->cr, 100, 100);
+  cairo_line_to(state->cr, 400, 100);
+  cairo_curve_to(state->cr, 800, 100, 800, 400, 400, 400);
+  cairo_line_to(state->cr, 800, 400);
+  cairo_curve_to(state->cr, 400, 400, 400, 800, 800, 800);
+  cairo_curve_to(state->cr, 800, 900, 100, 900, 100, 800);
+  cairo_close_path(state->cr);
+
+  double x0, y0, x1, y1;
+  cairo_stroke_extents(state->cr, &x0, &y0, &x1, &y1);
+
+  cairo_stroke(state->cr);
+
+  cairo_set_source_rgb(state->cr, 0.0, 0.0, 1.0);
+  cairo_set_line_width(state->cr, 1);
+  cairo_rectangle(state->cr, x0, y0, x1 - x0 + 1, y1 - y0 + 1);
+  cairo_stroke(state->cr);
+
+  SDL_UpdateWindowSurface(state->window);
+}
+
+// Same Cubic Bezier but with a stroke of width 50 and join being
+// round and color being green
+void CairoTestCubicStrokeRound(State *state)
+{
+  cairo_set_source_rgb(state->cr, 1.0, 0.0, 0.0);
+  cairo_move_to(state->cr, 100, 100);
+  cairo_line_to(state->cr, 400, 100);
+  cairo_curve_to(state->cr, 800, 100, 800, 400, 400, 400);
+  cairo_line_to(state->cr, 800, 400);
+  cairo_curve_to(state->cr, 400, 400, 400, 800, 800, 800);
+  cairo_curve_to(state->cr, 800, 900, 100, 900, 100, 800);
+  cairo_close_path(state->cr);
+  cairo_fill(state->cr);
+
+  cairo_set_source_rgb(state->cr, 0.0, 1.0, 0.0);
+  cairo_set_line_width(state->cr, 50);
+  cairo_set_line_join(state->cr, CAIRO_LINE_JOIN_ROUND);
+  cairo_move_to(state->cr, 100, 100);
+  cairo_line_to(state->cr, 400, 100);
+  cairo_curve_to(state->cr, 800, 100, 800, 400, 400, 400);
+  cairo_line_to(state->cr, 800, 400);
+  cairo_curve_to(state->cr, 400, 400, 400, 800, 800, 800);
+  cairo_curve_to(state->cr, 800, 900, 100, 900, 100, 800);
+  cairo_close_path(state->cr);
+
+  double x0, y0, x1, y1;
+  cairo_stroke_extents(state->cr, &x0, &y0, &x1, &y1);
+
+  cairo_stroke(state->cr);
+
+  cairo_set_source_rgb(state->cr, 0.0, 0.0, 1.0);
+  cairo_set_line_width(state->cr, 1);
+  cairo_rectangle(state->cr, x0, y0, x1 - x0 + 1, y1 - y0 + 1);
+  cairo_stroke(state->cr);
+
+  SDL_UpdateWindowSurface(state->window);
+}
+
+// A simple triangle that's filled and stroked with a miter join
+// (500, 500) to (550, 200) to (600, 500) filled with Red
+// stroked with Miter join with miter limit being 100 and stroke width
+// being 20 and stroke color bieng green
+void CairoTestCubicStrokeMiter(State *state)
+{
+  cairo_set_source_rgb(state->cr, 1.0, 0.0, 0.0);
+  cairo_move_to(state->cr, 500, 500);
+  cairo_line_to(state->cr, 550, 200);
+  cairo_line_to(state->cr, 600, 500);
+  cairo_close_path(state->cr);
+  cairo_fill(state->cr);
+
+  cairo_set_source_rgb(state->cr, 0.0, 1.0, 0.0);
+  cairo_set_line_width(state->cr, 20);
+  cairo_set_miter_limit(state->cr, 100);
+  cairo_set_line_join(state->cr, CAIRO_LINE_JOIN_MITER);
+  cairo_move_to(state->cr, 500, 500);
+  cairo_line_to(state->cr, 550, 200);
+  cairo_line_to(state->cr, 600, 500);
+  cairo_close_path(state->cr);
+
+  double x0, y0, x1, y1;
+  cairo_stroke_extents(state->cr, &x0, &y0, &x1, &y1);
+
+  cairo_stroke(state->cr);
+
+  cairo_set_source_rgb(state->cr, 0.0, 0.0, 1.0);
+  cairo_set_line_width(state->cr, 1);
+  cairo_rectangle(state->cr, x0, y0, x1 - x0 + 1, y1 - y0 + 1);
+  cairo_stroke(state->cr);
+
+  SDL_UpdateWindowSurface(state->window);
+}
+
+// An arc with a red fill formed by doing a circular arc and then
+// doing a scale transform on it
+void CairoTestArcFill(State *state)
+{
+  cairo_set_source_rgb(state->cr, 1.0, 0.0, 0.0);
+  cairo_scale(state->cr, 1.5, 0.8);
+  cairo_arc(state->cr, 500, 500, 100, M_PI/4, M_PI + M_PI/8);
+  cairo_close_path(state->cr);
+  double x0, y0, x1, y1;
+  cairo_fill_extents(state->cr, &x0, &y0, &x1, &y1);
+  cairo_fill(state->cr);
+
+
+  cairo_set_source_rgb(state->cr, 0.0, 0.0, 1.0);
+  cairo_set_line_width(state->cr, 1);
+  cairo_rectangle(state->cr, x0, y0, x1 - x0 + 1, y1 - y0 + 1);
+  cairo_stroke(state->cr);
+
+  SDL_UpdateWindowSurface(state->window);
+}
+
+// A rectangle that's filled with red and rotated to demonstrate
+// the problem with Cairo when a rotate transform is applied
+void CairoTestRectangleRotateFill(State *state)
+{
+  cairo_set_source_rgb(state->cr, 1.0, 0.0, 0.0);
+  cairo_translate(state->cr, 500, 500);
+  cairo_rotate(state->cr, M_PI / 4);
+  cairo_translate(state->cr, -500, -500);
+  cairo_rectangle(state->cr, 400, 400, 200, 200);
+  double x0, y0, x1, y1;
+  cairo_fill_extents(state->cr, &x0, &y0, &x1, &y1);
+  cairo_fill(state->cr);
+
+  cairo_identity_matrix(state->cr);
+  cairo_set_source_rgb(state->cr, 0.0, 0.0, 1.0);
+  cairo_set_line_width(state->cr, 1);
+  cairo_rectangle(state->cr, x0, y0, x1 - x0 + 1, y1 - y0 + 1);
+  cairo_stroke(state->cr);
+
+  SDL_UpdateWindowSurface(state->window);
+}
+
+void CairoTestClippingSimple(State *state)
+{
+  cairo_reset_clip(state->cr);
+  cairo_move_to(state->cr, 100, 100);
+  cairo_curve_to(state->cr, 700, 100, 700, 500, 100, 500);
+  cairo_close_path(state->cr);
+  cairo_clip(state->cr);
+
+  cairo_set_source_rgb(state->cr, 1.0, 0.0, 0.0);
+  cairo_move_to(state->cr, 700, 100);
+  cairo_curve_to(state->cr, 100, 100, 100, 500, 700, 500);
+  cairo_close_path(state->cr);
+
+  double path_x0, path_y0, path_x1, path_y1;
+  cairo_fill_extents(state->cr, &path_x0, &path_y0, &path_x1, &path_y1);
+  double clip_x0, clip_y0, clip_x1, clip_y1;
+  cairo_clip_extents(state->cr, &clip_x0, &clip_y0, &clip_x1, &clip_y1);
+
+  cairo_fill(state->cr);
+
+  cairo_reset_clip(state->cr);
+  cairo_set_source_rgb(state->cr, 0.0, 0.0, 1.0);
+  cairo_set_line_width(state->cr, 1);
+  cairo_rectangle(state->cr, clip_x0, clip_y0, clip_x1 - clip_x0 + 1, clip_y1 - clip_y0 + 1);
+  cairo_stroke(state->cr);
+
+  cairo_set_source_rgb(state->cr, 0.0, 1.0, 0.0);
+  cairo_rectangle(state->cr, path_x0, path_y0, path_x1 - path_x0 + 1, path_y1 - path_y0 + 1);
+  cairo_stroke(state->cr);
+
+  SDL_UpdateWindowSurface(state->window);
+}
+
+void CairoTestStrokedCurveButt(State *state)
+{
+  cairo_set_source_rgb(state->cr, 0.0, 1.0, 0.0);
+  cairo_set_line_width(state->cr, 40);
+  cairo_set_line_join(state->cr, CAIRO_LINE_JOIN_ROUND);
+  cairo_set_line_cap(state->cr, CAIRO_LINE_CAP_BUTT);
+  cairo_move_to(state->cr, 100, 500);
+  cairo_curve_to(state->cr, 300, 400, 300, 600, 400, 500);
+
+  double x0, y0, x1, y1;
+  cairo_stroke_extents(state->cr, &x0, &y0, &x1, &y1);
+  cairo_stroke(state->cr);
+
+  cairo_set_source_rgb(state->cr, 0.0, 1.0, 0.0);
+  cairo_set_line_width(state->cr, 1);
+  cairo_rectangle(state->cr, x0, y0, x1 - x0 + 1, y1 - y0 + 1);
+  cairo_stroke(state->cr);
+
+  SDL_UpdateWindowSurface(state->window);
+}
+
+void CairoTestStrokedCurveSquare(State *state)
+{
+  cairo_set_source_rgb(state->cr, 0.0, 1.0, 0.0);
+  cairo_set_line_width(state->cr, 40);
+  cairo_set_line_join(state->cr, CAIRO_LINE_JOIN_ROUND);
+  cairo_set_line_cap(state->cr, CAIRO_LINE_CAP_SQUARE);
+  cairo_move_to(state->cr, 100, 500);
+  cairo_curve_to(state->cr, 300, 400, 300, 600, 400, 500);
+
+  double x0, y0, x1, y1;
+  cairo_stroke_extents(state->cr, &x0, &y0, &x1, &y1);
+  cairo_stroke(state->cr);
+
+  cairo_set_source_rgb(state->cr, 0.0, 1.0, 0.0);
+  cairo_set_line_width(state->cr, 1);
+  cairo_rectangle(state->cr, x0, y0, x1 - x0 + 1, y1 - y0 + 1);
+  cairo_stroke(state->cr);
+
+  SDL_UpdateWindowSurface(state->window);
+}
+
+void CairoTestStrokedCurveRound(State *state)
+{
+  cairo_set_source_rgb(state->cr, 0.0, 1.0, 0.0);
+  cairo_set_line_width(state->cr, 40);
+  cairo_set_line_join(state->cr, CAIRO_LINE_JOIN_ROUND);
+  cairo_set_line_cap(state->cr, CAIRO_LINE_CAP_ROUND);
+  cairo_move_to(state->cr, 100, 500);
+  cairo_curve_to(state->cr, 300, 400, 300, 600, 400, 500);
+
+  double x0, y0, x1, y1;
+  cairo_stroke_extents(state->cr, &x0, &y0, &x1, &y1);
+  cairo_stroke(state->cr);
+
+  cairo_set_source_rgb(state->cr, 0.0, 1.0, 0.0);
+  cairo_set_line_width(state->cr, 1);
+  cairo_rectangle(state->cr, x0, y0, x1 - x0 + 1, y1 - y0 + 1);
+  cairo_stroke(state->cr);
+
+  SDL_UpdateWindowSurface(state->window);
+}
+
+void drawing(State *state){
+  switch(state->current_test) {
+    case 0:
+      CairoTestRectangleFill(state);
+      break;
+    case 1:
+      CairoTestRectangleStroke(state);
+      break;
+    case 2:
+      CairoTestCubicFill(state);
+      break;
+    case 3:
+      CairoTestCubicStrokeBevel(state);
+      break;
+    case 4:
+      CairoTestCubicStrokeRound(state);
+      break;
+    case 5:
+      CairoTestCubicStrokeMiter(state);
+      break;
+    case 6:
+      CairoTestArcFill(state);
+      break;
+    case 7:
+      CairoTestRectangleRotateFill(state);
+      break;
+    case 8:
+      CairoTestClippingSimple(state);
+      break;
+    case 9:
+      CairoTestStrokedCurveButt(state);
+      break;
+    case 10:
+      CairoTestStrokedCurveSquare(state);
+      break;
+    case 11:
+      CairoTestStrokedCurveRound(state);
+      break;
+    case 12:
+      SkiaTestRectangleFill(state);
+      break;
+    case 13:
+      SkiaTestRectangleStroke(state);
+      break;
+    case 14:
+      SkiaTestCubicFill(state);
+      break;
+    case 15:
+      SkiaTestCubicStrokeBevel(state);
+      break;
+    case 16:
+      SkiaTestCubicStrokeRound(state);
+      break;
+    case 17:
+      SkiaTestCubicStrokeMiter(state);
+      break;
+    case 18:
+      SkiaTestArcFill(state);
+      break;
+    case 19:
+      SkiaTestRectangleRotateFill(state);
+      break;
+    case 20:
+      SkiaTestRectangleRotateStroke(state);
+      break;
+    case 21:
+      SkiaTestClippingSimple(state);
+      break;
+    case 22:
+      SkiaTestStrokedCurveButt(state);
+      break;
+    case 23:
+      SkiaTestStrokedCurveSquare(state);
+      break;
+    case 24:
+      SkiaTestStrokedCurveRound(state);
+      break;
   }
 }
 
@@ -439,7 +1249,7 @@ int main(int argc, char** argv)
 
   clearCanvas(&state);
   setTransform(&state);
-  drawing(&state, std::string(argv[1]));
+  drawing(&state);
   drawInfoBox(&state);
 
   SDL_Event event;
@@ -450,161 +1260,25 @@ int main(int argc, char** argv)
         SDL_KeyboardEvent ke = event.key;
         if(ke.keysym.scancode == 20)
           break;
-        else if(ke.keysym.scancode == 87)
+        else if(ke.keysym.scancode == 79)
         {
+          // right
+          state.current_test = (state.current_test + 1) % state.total_tests;
           clearCanvas(&state);
-          zoomInTransform(&state);
           setTransform(&state);
-          if (state.render_recording)
-            drawRecording(&state);
-          else
-            drawing(&state, std::string(argv[1]));
-          drawInfoBox(&state);
-        }
-        else if(ke.keysym.scancode == 86)
-        {
-          clearCanvas(&state);
-          zoomOutTransform(&state);
-          setTransform(&state);
-          if (state.render_recording)
-            drawRecording(&state);
-          else
-            drawing(&state, std::string(argv[1]));
-          drawInfoBox(&state);
-        }
-        else if(ke.keysym.scancode == 82)
-        {
-          /* up */
-          clearCanvas(&state);
-          moveTransform(&state, 0, -1);
-          setTransform(&state);
-          if (state.render_recording)
-            drawRecording(&state);
-          else
-            drawing(&state, std::string(argv[1]));
+          drawing(&state);
           drawInfoBox(&state);
         }
         else if(ke.keysym.scancode == 80)
         {
-          /* left */
+          // left
+          state.current_test -= 1;
+          if (state.current_test < 0)
+            state.current_test = state.total_tests - 1;
           clearCanvas(&state);
-          moveTransform(&state, -1, 0);
           setTransform(&state);
-          if (state.render_recording)
-            drawRecording(&state);
-          else
-            drawing(&state, std::string(argv[1]));
+          drawing(&state);
           drawInfoBox(&state);
-        }
-        else if(ke.keysym.scancode == 81)
-        {
-          /* down */
-          clearCanvas(&state);
-          moveTransform(&state, 0, 1);
-          setTransform(&state);
-          if (state.render_recording)
-            drawRecording(&state);
-          else
-            drawing(&state, std::string(argv[1]));
-          drawInfoBox(&state);
-        }
-        else if(ke.keysym.scancode == 79)
-        {
-          /* right */
-          clearCanvas(&state);
-          moveTransform(&state, 1, 0);
-          setTransform(&state);
-          if (state.render_recording)
-            drawRecording(&state);
-          else
-            drawing(&state, std::string(argv[1]));
-          drawInfoBox(&state);
-        }
-        else if(ke.keysym.scancode == 15)
-        {
-          clearCanvas(&state);
-          setTransform(&state);
-          drawing(&state, std::string(argv[1]));
-          unsigned char* c_data = cairo_image_surface_get_data(state.cairo_surface);
-          int c_width = cairo_image_surface_get_width(state.cairo_surface);
-          int c_height = cairo_image_surface_get_height(state.cairo_surface);
-          int c_pitch = cairo_image_surface_get_stride(state.cairo_surface);
-          int c_offset = c_pitch / c_width;
-          unsigned char* g_data = gdk_pixbuf_get_pixels(state.saved_pixbuf);
-          int g_width = gdk_pixbuf_get_width(state.saved_pixbuf);
-          int g_height = gdk_pixbuf_get_height(state.saved_pixbuf);
-          int g_pitch = gdk_pixbuf_get_rowstride(state.saved_pixbuf);
-          int g_offset = g_pitch / g_width;
-          for(int i = 0; i < c_height; i++) {
-            for(int j = 0; j < c_width; j++){
-              *(g_data + (i * g_pitch) + j*g_offset) = *(c_data + (i * c_pitch) + j*4);
-              *(g_data + (i * g_pitch) + j*g_offset + 1) = *(c_data + (i * c_pitch) + j*4 + 1);
-              *(g_data + (i * g_pitch) + j*g_offset + 2) = *(c_data + (i * c_pitch) + j*4 + 2);
-            }
-          }
-          state.render_recording = true;
-          state.x0 = 0;
-          state.y0 = 0;
-          state.x1 = state.width - 1;
-          state.y1 = state.height - 1;
-          clearCanvas(&state);
-          setTransform(&state);
-          drawRecording(&state);
-          drawInfoBox(&state);
-        }
-        else if(ke.keysym.scancode == 24)
-        {
-          state.render_recording = false;
-          state.x0 = 0;
-          state.y0 = 0;
-          state.x1 = state.width - 1;
-          state.y1 = state.height - 1;
-          clearCanvas(&state);
-          setTransform(&state);
-          drawing(&state, std::string(argv[1]));
-          drawInfoBox(&state);
-        }
-        else if(ke.keysym.scancode == 98)
-        {
-          clearCanvas(&state);
-          resetTransform(&state);
-          setTransform(&state);
-          if (state.render_recording)
-            drawRecording(&state);
-          else
-            drawing(&state, std::string(argv[1]));
-          drawInfoBox(&state);
-        }
-        else if(ke.keysym.scancode == 21)
-        {
-          if (state.renderer == SNV)
-            state.renderer = LIBRSVG;
-          else
-            state.renderer = SNV;
-          clearCanvas(&state);
-          setTransform(&state);
-          if (state.render_recording)
-            drawRecording(&state);
-          else
-            drawing(&state, std::string(argv[1]));
-          drawInfoBox(&state);
-        }
-        else if(ke.keysym.scancode == 23)
-        {
-          if (state.renderer == SNV)
-            state.engine = state.engine == CAIRO ? SKIA : CAIRO;
-          clearCanvas(&state);
-          setTransform(&state);
-          if (state.render_recording)
-            drawRecording(&state);
-          else
-            drawing(&state, std::string(argv[1]));
-          drawInfoBox(&state);
-        }
-        else if(ke.keysym.scancode == 22)
-        {
-          cairo_surface_write_to_png(state.cairo_surface, "output.png");
-          printf("done\n");
         }
         else
           printf("%d\n", ke.keysym.scancode);
