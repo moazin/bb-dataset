@@ -402,13 +402,13 @@ void drawing(State *state, std::string filename){
   x1 = x0 + width - 1;
   y1 = y0 + height - 1;
   std::vector<SVGNative::RectT> boxes = drawSVGDocument(state, filename);
-  /*
   drawRectangle(state, x0, y0, x0 + width - 1, y0 + height - 1, Color{0.0, 1.0, 0.0});
-  */
+  /*
   for(auto box: boxes) {
     drawRectangle(state, box.x0, box.y0, box.x1, box.y1, Color{0.0, 1.0, 0.0});
     printf("pushed -> [%f %f %f %f]\n", box.x0, box.y0, box.x1, box.y1);
   }
+  */
 }
 
 
