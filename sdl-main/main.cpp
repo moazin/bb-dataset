@@ -349,6 +349,7 @@ void calculateBoundingBoxSkia(std::string filename, double *x0, double *y0, doub
 void calculateBoundingBox(std::string filename, double *x0, double *y0, double *width, double *height)
 {
   calculateBoundingBoxSkia(filename, x0, y0, width, height);
+  //calculateBoundingBoxCairo(filename, x0, y0, width, height);
 }
 
 void drawInfoBox(State *state)

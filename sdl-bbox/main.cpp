@@ -122,7 +122,8 @@ int initialize(State *state, int width, int height) {
   state->test_names.push_back(std::string("Cairo test 11 - Bounds of Curves with thick strokes Square"));
   state->test_names.push_back(std::string("Cairo test 12 - Bounds of Curves with thick strokes Round"));
   state->test_names.push_back(std::string("Skia test 1 - Simple Rectangle Fill"));
-  state->test_names.push_back(std::string("Skia test 2 - Simple Rectangle Stroke"));
+  state->test_names.push_back(std::string("Skia test 2(a) - Simple Rectangle Stroke Miter"));
+  state->test_names.push_back(std::string("Skia test 2(b) - Simple Rectangle Stroke Round"));
   state->test_names.push_back(std::string("Skia test 3 - Simple Cubic Bezier Fill"));
   state->test_names.push_back(std::string("Skia test 4 - Simple Cubic Bezier Stroke Bevel"));
   state->test_names.push_back(std::string("Skia test 5 - Simple Cubic Bezier Stroke Round"));
@@ -134,7 +135,7 @@ int initialize(State *state, int width, int height) {
   state->test_names.push_back(std::string("Skia test 11 - Bounds of Curves with thick strokes Butt"));
   state->test_names.push_back(std::string("Skia test 12 - Bounds of Curves with thick strokes Square"));
   state->test_names.push_back(std::string("Skia test 13 - Bounds of Curves with thick strokes Round"));
-  state->total_tests = 25;
+  state->total_tests = 26;
   state->current_test = 0;
   return 0;
 }
@@ -430,7 +431,7 @@ void SkiaTestRectangleFill(State *state){
   SDL_UpdateWindowSurface(state->window);
 }
 
-void SkiaTestRectangleStroke(State *state){
+void SkiaTestRectangleStrokeMiter(State *state){
   SkPath path;
   path.moveTo(100, 100);
   path.lineTo(400, 100);
@@ -448,6 +449,41 @@ void SkiaTestRectangleStroke(State *state){
   stroke_paint.setStyle(SkPaint::kStroke_Style);
   stroke_paint.setStrokeWidth(40);
   stroke_paint.setStrokeJoin(SkPaint::kDefault_Join);
+  state->skCanvas->drawPath(path, stroke_paint);
+
+  SkRect tightBounds = path.computeTightBounds();
+
+  if (stroke_paint.canComputeFastBounds()) {
+    tightBounds = stroke_paint.computeFastBounds(tightBounds, &tightBounds);
+  }
+
+  SkPaint bbox_paint;
+  bbox_paint.setAntiAlias(true);
+  bbox_paint.setColor(SK_ColorBLUE);
+  bbox_paint.setStyle(SkPaint::kStroke_Style);
+  state->skCanvas->drawRect(tightBounds, bbox_paint);
+
+  SDL_UpdateWindowSurface(state->window);
+}
+
+void SkiaTestRectangleStrokeRound(State *state){
+  SkPath path;
+  path.moveTo(100, 100);
+  path.lineTo(400, 100);
+  path.lineTo(400, 400);
+  path.lineTo(100, 400);
+  path.close();
+  SkPaint fill_paint;
+  fill_paint.setAntiAlias(true);
+  fill_paint.setColor(SK_ColorRED);
+  fill_paint.setStyle(SkPaint::kFill_Style);
+  state->skCanvas->drawPath(path, fill_paint);
+  SkPaint stroke_paint;
+  stroke_paint.setAntiAlias(true);
+  stroke_paint.setColor(SK_ColorGREEN);
+  stroke_paint.setStyle(SkPaint::kStroke_Style);
+  stroke_paint.setStrokeWidth(40);
+  stroke_paint.setStrokeJoin(SkPaint::kRound_Join);
   state->skCanvas->drawPath(path, stroke_paint);
 
   SkRect tightBounds = path.computeTightBounds();
@@ -1033,9 +1069,11 @@ void CairoTestRectangleRotateFill(State *state)
   cairo_translate(state->cr, -500, -500);
   cairo_rectangle(state->cr, 400, 400, 200, 200);
   double x0, y0, x1, y1;
+  cairo_identity_matrix(state->cr);
   cairo_fill_extents(state->cr, &x0, &y0, &x1, &y1);
   cairo_fill(state->cr);
 
+  printf("bounds -> [%f %f %f %f]\n", x0, y0, x1, y1);
   cairo_identity_matrix(state->cr);
   cairo_set_source_rgb(state->cr, 0.0, 0.0, 1.0);
   cairo_set_line_width(state->cr, 1);
@@ -1183,39 +1221,42 @@ void drawing(State *state){
       SkiaTestRectangleFill(state);
       break;
     case 13:
-      SkiaTestRectangleStroke(state);
+      SkiaTestRectangleStrokeMiter(state);
       break;
     case 14:
-      SkiaTestCubicFill(state);
+      SkiaTestRectangleStrokeRound(state);
       break;
     case 15:
-      SkiaTestCubicStrokeBevel(state);
+      SkiaTestCubicFill(state);
       break;
     case 16:
-      SkiaTestCubicStrokeRound(state);
+      SkiaTestCubicStrokeBevel(state);
       break;
     case 17:
-      SkiaTestCubicStrokeMiter(state);
+      SkiaTestCubicStrokeRound(state);
       break;
     case 18:
-      SkiaTestArcFill(state);
+      SkiaTestCubicStrokeMiter(state);
       break;
     case 19:
-      SkiaTestRectangleRotateFill(state);
+      SkiaTestArcFill(state);
       break;
     case 20:
-      SkiaTestRectangleRotateStroke(state);
+      SkiaTestRectangleRotateFill(state);
       break;
     case 21:
-      SkiaTestClippingSimple(state);
+      SkiaTestRectangleRotateStroke(state);
       break;
     case 22:
-      SkiaTestStrokedCurveButt(state);
+      SkiaTestClippingSimple(state);
       break;
     case 23:
-      SkiaTestStrokedCurveSquare(state);
+      SkiaTestStrokedCurveButt(state);
       break;
     case 24:
+      SkiaTestStrokedCurveSquare(state);
+      break;
+    case 25:
       SkiaTestStrokedCurveRound(state);
       break;
   }
