@@ -8,9 +8,9 @@
 #include <cairo.h>
 #include <librsvg/rsvg.h>
 
-#include <SVGRenderer.h>
-#include <SVGDocument.h>
-#include <CairoSVGRenderer.h>
+#include <svgnative/SVGRenderer.h>
+#include <svgnative/SVGDocument.h>
+#include <svgnative/ports/cairo/CairoSVGRenderer.h>
 #include <core/SkData.h>
 #include <core/SkImage.h>
 #include <core/SkStream.h>
@@ -18,8 +18,7 @@
 #include <core/SkCanvas.h>
 #include <src/core/SkRTree.h>
 #include <SkPictureRecorder.h>
-#include <SVGDocument.h>
-#include <SkiaSVGRenderer.h>
+#include <svgnative/ports/skia/SkiaSVGRenderer.h>
 
 typedef enum _SVGRenderer {
   SNV = 0,
@@ -123,53 +122,66 @@ void clearCanvas(State *state)
   SDL_UpdateWindowSurface(state->window);
 }
 
-std::vector<SVGNative::RectT> drawSVGDocumentSNVCairo(State *state, std::string svg_doc)
+void drawSVGDocumentSNVCairo(State *state, std::string svg_doc)
 {
   auto renderer = std::make_shared<SVGNative::CairoSVGRenderer>();
   auto doc = std::unique_ptr<SVGNative::SVGDocument>(SVGNative::SVGDocument::CreateSVGDocument(svg_doc.c_str(), renderer));
   renderer->SetCairo(state->cr);
-  std::vector<SVGNative::RectT> bounding_boxes = doc->Render();
-  cairo_surface_flush(state->cairo_surface);
-  return bounding_boxes;
+  std::vector<SVGNative::Rect> boxes = doc->Bounds();
+  doc->Render();
+  for(auto const& box: boxes) {
+    cairo_new_path(state->cr);
+    cairo_identity_matrix(state->cr);
+    cairo_set_source_rgb(state->cr, 1.0, 0.0, 0.0);
+    cairo_set_line_width(state->cr, 1.0);
+    cairo_rectangle(state->cr, box.x, box.y, box.width, box.height);
+    cairo_stroke(state->cr);
+    cairo_surface_flush(state->cairo_surface);
+  }
 }
 
-std::vector<SVGNative::RectT> drawSVGDocumentSNVSkia(State *state, std::string svg_doc)
+void drawSVGDocumentSNVSkia(State *state, std::string svg_doc)
 {
   auto renderer = std::make_shared<SVGNative::SkiaSVGRenderer>();
 
   auto doc = std::unique_ptr<SVGNative::SVGDocument>(SVGNative::SVGDocument::CreateSVGDocument(svg_doc.c_str(), renderer));
 
   renderer->SetSkCanvas(state->skCanvas);
-  return doc->Render();
+  doc->Render();
+  std::vector<SVGNative::Rect> boxes = doc->Bounds();
+  for(auto const& box: boxes) {
+    cairo_new_path(state->cr);
+    cairo_identity_matrix(state->cr);
+    cairo_set_source_rgb(state->cr, 1.0, 0.0, 0.0);
+    cairo_set_line_width(state->cr, 1.0);
+    cairo_rectangle(state->cr, box.x, box.y, box.width, box.height);
+    cairo_stroke(state->cr);
+    cairo_surface_flush(state->cairo_surface);
+  }
 }
 
-std::vector<SVGNative::RectT> drawSVGDocumentSNV(State *state, std::string svg_doc)
+void drawSVGDocumentSNV(State *state, std::string svg_doc)
 {
-  std::vector<SVGNative::RectT> dumb;
   if (state->engine == CAIRO)
   {
-    return drawSVGDocumentSNVCairo(state, svg_doc);
+    drawSVGDocumentSNVCairo(state, svg_doc);
   }
   else if(state->engine == SKIA)
   {
-    return drawSVGDocumentSNVSkia(state, svg_doc);
+    drawSVGDocumentSNVSkia(state, svg_doc);
   }
-  return dumb;
 }
 
-std::vector<SVGNative::RectT> drawSVGDocumentLibrsvg(State *state, std::string svg_doc)
+void drawSVGDocumentLibrsvg(State *state, std::string svg_doc)
 {
-  std::vector<SVGNative::RectT> dumb;
   GError *error = nullptr;
   RsvgHandle *handle = rsvg_handle_new_from_data((const unsigned char*)svg_doc.c_str(), strlen(svg_doc.c_str()), &error);
   rsvg_handle_render_cairo(handle, state->cr);
   cairo_surface_flush(state->cairo_surface);
-  return dumb;
 }
 
-std::vector<SVGNative::RectT> drawSVGDocument(State *state, std::string filename)
+void drawSVGDocument(State *state, std::string filename)
 {
-  std::vector<SVGNative::RectT> boxes;
   std::ifstream svg_file(filename);
 
   std::string svg_doc = "";
@@ -180,13 +192,12 @@ std::vector<SVGNative::RectT> drawSVGDocument(State *state, std::string filename
   }
 
   if (state->renderer == SNV)
-    boxes = drawSVGDocumentSNV(state, svg_doc);
+    drawSVGDocumentSNV(state, svg_doc);
   else if(state->renderer == LIBRSVG)
-    boxes = drawSVGDocumentLibrsvg(state, svg_doc);
+    drawSVGDocumentLibrsvg(state, svg_doc);
 
   svg_file.close();
   SDL_UpdateWindowSurface(state->window);
-  return boxes;
 }
 
 void drawRectangle(State *state, double x0, double y0, double x1, double y1, Color color) {
@@ -342,8 +353,6 @@ void calculateBoundingBoxSkia(std::string filename, double *x0, double *y0, doub
   *y0 = rect.y();
   *width = rect.width();
   *height = rect.height();
-
-  printf("final skia rec -> [%f %f %f %f]\n", *x0, *y0, *x0 + *width - 1, *y0 + *height - 1);
 }
 
 void calculateBoundingBox(std::string filename, double *x0, double *y0, double *width, double *height)
@@ -399,17 +408,10 @@ void drawInfoBox(State *state)
 
 void drawing(State *state, std::string filename){
   double x0, y0, width, height, x1, y1;
-  calculateBoundingBox(filename, &x0, &y0, &width, &height);
+  //calculateBoundingBox(filename, &x0, &y0, &width, &height);
   x1 = x0 + width - 1;
   y1 = y0 + height - 1;
-  std::vector<SVGNative::RectT> boxes = drawSVGDocument(state, filename);
-  drawRectangle(state, x0, y0, x0 + width - 1, y0 + height - 1, Color{0.0, 1.0, 0.0});
-  /*
-  for(auto box: boxes) {
-    drawRectangle(state, box.x0, box.y0, box.x1, box.y1, Color{0.0, 1.0, 0.0});
-    printf("pushed -> [%f %f %f %f]\n", box.x0, box.y0, box.x1, box.y1);
-  }
-  */
+  drawSVGDocument(state, filename);
 }
 
 

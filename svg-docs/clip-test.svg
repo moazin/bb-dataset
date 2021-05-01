@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink= "http://www.w3.org/1999/xlink" xmlns:svg="http://www.w3.org/2000/svg" viewBox=" 0 0 1000 1000">
+  <defs>
+    <clipPath id="myRect">
+      <rect x="100" y="100" width="300" height="300" fill="blue" />
+    </clipPath>
+  </defs>
+  <rect x="200" y="200" width="300" height="300" fill="green" clip-path="url(#myRect)"/>
+</svg>
