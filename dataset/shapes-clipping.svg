@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 1000" width="2000" height="1000">
+  <defs>
+    <linearGradient id="sunset" gradientTransform="rotate(90)">
+      <stop offset="5%" stop-color="yellow" />
+      <stop offset="95%" stop-color="orangered" />
+    </linearGradient>
+    <clipPath id="BPath">
+      <path d="M 110,110 l 190,0 c 300,0 300,300 0,300 c 300,0 300,300 0,300 l -190,0 Z" stroke="red" />
+    </clipPath>
+    <clipPath id="AudiPath">
+      <path d="M 810,200 a 200 200 0 0 1 0,400 a 200 200 0 0 1 0,-400 Z m 200,0 a 200 200 0 0 1 0,400 a 200 200 0 0 1 0,-400 Z m 210,0 a 200 200 0 0 1 0,400 a 200 200 0 0 1 0,-400 Z" clip-rule="evenodd" />
+    </clipPath>
+  </defs>
+  <rect x="100" y="100" width="800" height="800" fill="url(#sunset)" clip-path="url(#BPath)" />
+  <rect x="600" y="100" width="900" height="800" fill="url(#sunset)" clip-path="url(#AudiPath)" />
+</svg>
