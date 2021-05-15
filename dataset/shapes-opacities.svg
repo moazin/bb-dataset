@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 1000" width="2000" height="1000">
+  <line x1="20" y1="20" x2="150" y2="50" stroke="blue" stroke-width="10" stroke-linecap="butt" />
+  <g transform="translate(100, 0)">
+    <line x1="20" y1="20" x2="150" y2="50" stroke="blue" stroke-width="10" stroke-linecap="round" />
+  </g>
+  <g transform="translate(400, 0)">
+    <line x1="20" y1="20" x2="150" y2="50" stroke="blue" stroke-width="10" stroke-linecap="square" />
+  </g>
+  <rect x="20" y="70" width="200" height="100" fill-opacity="0" stroke="#0F0"/>
+  <rect x="20" y="200" width="200" height="100" fill-opacity="0" stroke="maroon" rx="20" ry="20" />
+  <rect x="20" y="310" width="200" height="100" fill-opacity="0" stroke="peachpuff" stroke-width="4" rx="20" ry="30" />
+  <rect x="20" y="420" width="200" height="100" fill-opacity="0" stroke="teal" rx="30" ry="20" />
+  <polyline points="20,530 50,600 80,530 110,600 140,530 170,600" fill-opacity="0" stroke="light#0F0" stroke-width="4" />
+  <g transform="translate(0, 10)">
+    <polygon points="20,600 30,700 40,720 50,680 60,720 70,680 80,720 80,720 150,720 140,620" fill-opacity="0" stroke="darkcyan" stroke-width="5"/>
+  </g>
+  <circle cx="100" cy="820" r="70" fill-opacity="0" stroke="#F00" stroke-width="10"/>
+  <path d="M 300,100 h 200 v 200 Q 500,400 600,400 v 400 h -200 Z" stroke-width="20" stroke-linejoin="round" stroke="rgb(100%, 0%, 100%)" fill="green" stroke-opacity="0.5"/>
+  <g transform="translate(120, 0)">
+    <path d="M 300,100 h 200 v 200 Q 500,400 600,400 v 400 h -200 Z" stroke-width="20" stroke-linejoin="bevel" stroke="rgb(125, 0, 125)" fill-opacity="0.5" fill="blue"/>
+  </g>
+  <g transform="translate(220, -30)">
+    <path d="M 300,100 h 200 v 200 Q 500,400 600,400 v 400 h -200 Z" stroke-width="20" stroke-linejoin="miter" stroke="rgb(50, 255, 50)" opacity="0.5" fill="darkcyan"/>
+  </g>
+  <path d="M 1400,500 l 30,-320 l 30,320 Z" stroke-width="20" stroke="#F00" stroke-linejoin="miter" stroke-miterlimit="30" fill-opacity="0"/>
+  <g transform="translate(100, 0)">
+    <path d="M 1400,500 l 30,-320 l 30,320 Z" stroke-width="20" stroke="#F00" stroke-linejoin="miter" fill-opacity="0" />
+  </g>
+</svg>

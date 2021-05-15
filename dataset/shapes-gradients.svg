@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 1000" width="2000" height="1000">
+  <defs>
+    <linearGradient id="redtoblue">
+      <stop offset="0%" stop-color="red" />
+      <stop offset="100%" stop-color="blue" />
+    </linearGradient>
+    <linearGradient id="redtobluediag" x1="0.1" y1="0.1" x2="0.8" y2="0.8">
+      <stop offset="0%" stop-color="red" />
+      <stop offset="100%" stop-color="blue" />
+    </linearGradient>
+    <linearGradient id="cyantosalmon">
+      <stop offset="0%" stop-color="darkcyan" />
+      <stop offset="100%" stop-color="salmon" />
+    </linearGradient>
+    <linearGradient id="sunsetnormal" gradientTransform="rotate(90)">
+      <stop offset="0%" stop-color="gold" />
+      <stop offset="25%" stop-color="orange" />
+      <stop offset="75%" stop-color="darkorange" />
+      <stop offset="100%" stop-color="orangered" />
+    </linearGradient>
+    <linearGradient id="sunset" gradientTransform="rotate(90)">
+      <stop offset="0%" stop-color="gold" />
+      <stop offset="25%" stop-color="orange" />
+      <stop offset="75%" stop-color="darkorange" />
+      <stop offset="100%" stop-color="orangered" />
+    </linearGradient>
+    <radialGradient id="darkcyanradial">
+      <stop offset="0%" stop-color="darkcyan" />
+      <stop offset="100%" stop-color="salmon" />
+    </radialGradient>
+    <radialGradient id="radial1" r="0.2" spreadMethod="pad">
+      <stop offset="0%" stop-color="darkcyan" />
+      <stop offset="100%" stop-color="salmon" />
+    </radialGradient>
+    <radialGradient id="radial2" r="0.2" spreadMethod="repeat">
+      <stop offset="0%" stop-color="darkcyan" />
+      <stop offset="100%" stop-color="salmon" />
+    </radialGradient>
+    <radialGradient id="radial3" r="0.2" spreadMethod="reflect">
+      <stop offset="0%" stop-color="darkcyan" />
+      <stop offset="100%" stop-color="salmon" />
+    </radialGradient>
+    <radialGradient id="radial4" r="0.5" fx="0.2" fy="0.2" cx="0.5" cy="0.5">
+      <stop offset="0%" stop-color="darkcyan" />
+      <stop offset="100%" stop-color="salmon" />
+    </radialGradient>
+  </defs>
+  <line x1="20" y1="20" x2="150" y2="50" stroke="url(#redtoblue)" stroke-width="10"/>
+  <rect x="20" y="70" width="200" height="100" fill="url(#cyantosalmon)" />
+  <rect x="20" y="200" width="200" height="100" fill="url(#sunset)" rx="20" ry="20" />
+  <rect x="20" y="310" width="200" height="100" fill="url(#redtobluediag)" rx="20" ry="30" />
+  <rect x="20" y="420" width="200" height="100" fill="teal" rx="30" ry="20" />
+  <polygon points="20,600 30,700 40,720 50,680 60,720 70,680 80,720 80,720 150,720 140,620" fill="url(#redtoblue)" />
+  <circle cx="100" cy="800" r="70" fill="url(#darkcyanradial)" />
+  <circle cx="500" cy="220" r="200" fill="url(#radial1)" />
+  <g transform="translate(420, 0)">
+    <circle cx="500" cy="220" r="200" fill="url(#radial2)" />
+  </g>
+  <g transform="translate(0, 420)">
+    <circle cx="500" cy="220" r="200" fill="url(#radial3)" />
+  </g>
+  <g transform="translate(420, 420)">
+    <circle cx="500" cy="220" r="200" fill="url(#radial4)" />
+  </g>
+</svg>
