@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 1000" width="2000" height="1000">
+  <defs>
+    <rect x="100" y="100" width="200" height="200" id="rectangle"/>
+  </defs>
+  <use href="#rectangle" fill="red" />
+  <use href="#rectangle" fill="peachpuff" x="250" />
+  <use href="#rectangle" fill="maroon" x="250" y="250"/>
+  <use href="#rectangle" fill="darkcyan" y="250"/>
+  <use href="#rectangle" fill="darkorange" transform="translate(500 0) scale(1.1 1) "/>
+  <use href="#rectangle" fill="crimson" transform="translate(950 200) rotate(-45) translate(-150 -150)"/>
+  <use href="#rectangle" fill="deeppink" transform="translate(700 450) scale(1.2 1) rotate(-45) translate(-150 -150)"/>
+  <use href="#rectangle" fill="deeppink" transform="translate(200 750) skewX(20) rotate(-45) translate(-150 -150)"/>
+  <use href="#rectangle" fill="deeppink" transform="translate(500 750) skewY(20) rotate(-45) translate(-150 -150)"/>
+  <use href="#rectangle" fill="lightsalmon" transform="matrix(2 0 0 2 900 200)"/>
+</svg>
