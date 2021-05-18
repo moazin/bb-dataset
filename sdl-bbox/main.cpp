@@ -8,9 +8,10 @@
 #include <cairo.h>
 #include <librsvg/rsvg.h>
 
-#include <SVGRenderer.h>
-#include <SVGDocument.h>
-#include <CairoSVGRenderer.h>
+#include <svgnative/SVGRenderer.h>
+#include <svgnative/SVGDocument.h>
+#include <svgnative/ports/cairo/CairoSVGRenderer.h>
+#include <svgnative/ports/skia/SkiaSVGRenderer.h>
 #include <core/SkData.h>
 #include <core/SkImage.h>
 #include <core/SkStream.h>
@@ -18,8 +19,6 @@
 #include <core/SkCanvas.h>
 #include <src/core/SkRTree.h>
 #include <SkPictureRecorder.h>
-#include <SVGDocument.h>
-#include <SkiaSVGRenderer.h>
 
 typedef enum _SVGRenderer {
   SNV = 0,
@@ -798,8 +797,10 @@ void SkiaTestStrokedCurveRound(State *state)
 // Simple Rectangle from (100, 100) -> (399, 399)
 // filled with color Red
 void CairoTestRectangleFill(State *state){
-  cairo_set_source_rgb(state->cr, 1.0, 0.0, 0.0);
-  cairo_translate(state->cr, 200, 200);
+  cairo_pattern_t *pattern = cairo_pattern_create_linear(100, 120, 200, 120);
+  cairo_pattern_add_color_stop_rgb(pattern, 0, 1.0, 0.0, 0.0);
+  cairo_pattern_add_color_stop_rgb(pattern, 1, 0.0, 0.0, 1.0);
+  cairo_set_source(state->cr, pattern);
   cairo_rectangle(state->cr, 100, 100, 300, 300);
 
   double x0, y0, x1, y1;
