@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 1000" width="2000" height="1000">
+  <g>
+    <rect x="100" y="100" width="80" height="80" />
+    <rect x="210" y="100" width="80" height="80" />
+    <rect x="100" y="210" width="80" height="80" />
+    <rect x="210" y="210" width="80" height="80" />
+  </g>
+  <g transform="translate(240 0)" fill="teal">
+    <rect x="100" y="100" width="80" height="80" />
+    <rect x="210" y="100" width="80" height="80" />
+    <rect x="100" y="210" width="80" height="80" />
+    <rect x="210" y="210" width="80" height="80" />
+  </g>
+  <g transform="translate(0 240)" fill="gold">
+    <rect x="100" y="100" width="80" height="80" />
+    <rect x="210" y="100" width="80" height="80" />
+    <rect x="100" y="210" width="80" height="80" />
+    <rect x="210" y="210" width="80" height="80" />
+  </g>
+  <g transform="translate(240 240)" fill="cyan">
+    <rect x="100" y="100" width="80" height="80" />
+    <rect x="210" y="100" width="80" height="80" />
+    <rect x="100" y="210" width="80" height="80" />
+    <rect x="210" y="210" width="80" height="80" />
+  </g>
+  <g transform="translate(480 0)" stroke="red" stroke-width="10" fill="peachpuff">
+    <rect x="100" y="100" width="80" height="80" />
+    <rect x="210" y="100" width="80" height="80" />
+    <rect x="100" y="210" width="80" height="80" />
+    <rect x="210" y="210" width="80" height="80" />
+  </g>
+  <g transform="translate(480 240)" stroke="red" stroke-linejoin="round" stroke-width="10" fill="peachpuff">
+    <rect x="100" y="100" width="80" height="80" />
+    <rect x="210" y="100" width="80" height="80" />
+    <rect x="100" y="210" width="80" height="80" />
+    <rect x="210" y="210" width="80" height="80" />
+  </g>
+  <g transform="translate(720 0)" stroke="red" stroke-linejoin="bevel" stroke-width="10" fill="peachpuff">
+    <rect x="100" y="100" width="80" height="80" />
+    <rect x="210" y="100" width="80" height="80" />
+    <rect x="100" y="210" width="80" height="80" />
+    <rect x="210" y="210" width="80" height="80" />
+  </g>
+  <g transform="translate(720 240)" stroke="blue" stroke-linejoin="miter" stroke-miterlimit="1" stroke-width="10" fill="peachpuff">
+    <rect x="100" y="100" width="80" height="80" />
+    <rect x="210" y="100" width="80" height="80" />
+    <rect x="100" y="210" width="80" height="80" />
+    <rect x="210" y="210" width="80" height="80" />
+  </g>
+</svg>

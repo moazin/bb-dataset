@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 1000" width="2000" height="1000">
+  <defs>
+    <clipPath id="clippath">
+      <rect x="100" y="100" width="200" height="200" transform="translate(70 0)"/>
+    </clipPath>
+    <clipPath id="clippath2">
+      <rect x="700" y="100" width="400" height="400"/>
+    </clipPath>
+  </defs>
+  <!--
+  <g transform="translate(300 300) rotate(-45) translate(-300 -300) translate(70 0)">
+    <rect x="100" y="100" width="200" height="200" fill="peachpuff"/>
+  </g>
+  <g transform="translate(300 300) rotate(-45) translate(-300 -300)">
+    <rect x="200" y="200" width="200" height="200" stroke-width="10" stroke="blue"/>
+  </g>
+  -->
+  <g transform="translate(300 300) rotate(-45) translate(-300 -300)">
+    <rect x="200" y="200" width="200" height="200" stroke-width="10" stroke="red" clip-path="url(#clippath)"/>
+  </g>
+  <g transform="translate(120 0)">
+    <g clip-path="url(#clippath2)">
+      <g transform="translate(700 300) rotate(-45) translate(-700 -300)">
+        <rect x="600" y="200" width="200" height="200" stroke-width="10" stroke="blue" />
+      </g>
+    </g>
+  </g>
+  <!-- <rect x="700" y="100" width="400" height="400" transform="translate(120 0)" fill="peachpuff" fill-opacity="0.2"/> -->
+</svg>
