@@ -11,5 +11,5 @@
   <use href="#rectangle" fill="deeppink" transform="translate(700 450) scale(1.2 1) rotate(-45) translate(-150 -150)"/>
   <use href="#rectangle" fill="deeppink" transform="translate(200 750) skewX(20) rotate(-45) translate(-150 -150)"/>
   <use href="#rectangle" fill="deeppink" transform="translate(500 750) skewY(20) rotate(-45) translate(-150 -150)"/>
-  <use href="#rectangle" fill="lightsalmon" transform="matrix(2 0 0 2 900 200)"/>
+  <use href="#rectangle" fill="lightsalmon" transform="translate(900 100) matrix(2 0 0 2 0 0)"/>
 </svg>
