@@ -797,11 +797,11 @@ void SkiaTestStrokedCurveRound(State *state)
 // Simple Rectangle from (100, 100) -> (399, 399)
 // filled with color Red
 void CairoTestRectangleFill(State *state){
-  cairo_pattern_t *pattern = cairo_pattern_create_linear(100, 120, 200, 120);
+  cairo_pattern_t *pattern = cairo_pattern_create_linear(0, 1, 0, 0);
   cairo_pattern_add_color_stop_rgb(pattern, 0, 1.0, 0.0, 0.0);
   cairo_pattern_add_color_stop_rgb(pattern, 1, 0.0, 0.0, 1.0);
-  cairo_set_source(state->cr, pattern);
   cairo_rectangle(state->cr, 100, 100, 300, 300);
+  cairo_set_source(state->cr, pattern);
 
   double x0, y0, x1, y1;
   cairo_identity_matrix(state->cr);
